@@ -1,0 +1,28 @@
+{
+  "name": "scratch4js",
+  "description": "The SB3 format for JavaScript.",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./umd": "./dist/umd/index.js"
+  },
+  "main": "./dist/index.cjs",
+  "unpkg": "./dist/umd/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rslib",
+    "dev": "rslib --watch"
+  },
+  "devDependencies": {
+    "@rslib/core": "^0.22.0"
+  },
+  "dependencies": {
+    "@turbowarp/jszip": "^3.12.0"
+  }
+}

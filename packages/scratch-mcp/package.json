@@ -1,0 +1,21 @@
+{
+  "name": "scratch-mcp",
+  "description": "Model Context Protocol server for editing Scratch .sb3 projects via scratch4js.",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "scratch-mcp": "./src/index.js"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.0",
+    "scratch4js": "workspace:*",
+    "ws": "^8.21.0",
+    "zod": "^3.25.0"
+  }
+}

@@ -1,0 +1,11 @@
+# Lock files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+skills-lock.json
+
+# Build output
+**/dist
+
+# Sample project fixture
+**/example_project

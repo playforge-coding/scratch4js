@@ -1,0 +1,145 @@
+// scratch-mcp live-reload userscript for TurboWarp Desktop.
+//
+// Connects to the scratch-mcp bridge over a plain WebSocket and, on command,
+// (re)loads or runs the project — so edits an agent makes through the MCP server
+// appear in the editor instantly.
+//
+// Protocol (JSON over WebSocket):
+//   bridge → us:  { id, method: "loadSB3" | "start" | "stop", params? }
+//   us → bridge:  { id, ok: true } | { id, ok: false, error }
+//
+// TurboWarp Desktop loads this file automatically from its config directory.
+// No build step: it is plain source using the browser's WebSocket and fetch.
+
+(() => {
+  'use strict';
+
+  const PORT = 9060;
+  const HTTP_ORIGIN = `http://localhost:${PORT}`;
+  const WS_URL = `ws://localhost:${PORT}`;
+  const RECONNECT_MS = 2000;
+
+  // TurboWarp Desktop exposes the Scratch VM as a global.
+  const vm = window.vm;
+  if (!vm) {
+    console.warn('[scratch-mcp] window.vm not found — live reload disabled.');
+    return;
+  }
+
+  /** Methods the bridge can invoke. Each returns/throws; the result is acked. */
+  const methods = {
+    async loadSB3({ path }) {
+      const res = await fetch(
+        `${HTTP_ORIGIN}/get.sb3?path=${encodeURIComponent(path)}`,
+      );
+      if (!res.ok) {
+        const detail = await res.text().catch(() => res.statusText);
+        throw new Error(`fetch ${res.status}: ${detail}`);
+      }
+      const buffer = await res.arrayBuffer();
+      await vm.loadProject(buffer);
+      ui.setProject(path);
+    },
+    async start() {
+      vm.greenFlag();
+    },
+    async stop() {
+      vm.stopAll();
+    },
+  };
+
+  let socket = null;
+  let reconnectTimer = null;
+
+  function connect() {
+    ui.setStatus('connecting');
+    socket = new WebSocket(WS_URL);
+    socket.addEventListener('open', () => ui.setStatus('connected'));
+    socket.addEventListener('message', onMessage);
+    socket.addEventListener('close', () => {
+      ui.setStatus('disconnected');
+      scheduleReconnect();
+    });
+    // An error is always followed by close, which handles reconnection.
+    socket.addEventListener('error', () => {});
+  }
+
+  function scheduleReconnect() {
+    if (reconnectTimer) return;
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      connect();
+    }, RECONNECT_MS);
+  }
+
+  async function onMessage(event) {
+    let msg;
+    try {
+      msg = JSON.parse(event.data);
+    } catch {
+      return;
+    }
+    const { id, method, params } = msg;
+    const handler = methods[method];
+    if (!handler) {
+      reply(id, false, `unknown method: ${method}`);
+      return;
+    }
+    try {
+      await handler(params || {});
+      reply(id, true);
+    } catch (err) {
+      reply(id, false, err && err.message ? err.message : String(err));
+    }
+  }
+
+  function reply(id, ok, error) {
+    if (id == null || !socket || socket.readyState !== WebSocket.OPEN) return;
+    socket.send(JSON.stringify(ok ? { id, ok } : { id, ok, error }));
+  }
+
+  // --- Status toolbar (styled by userstyle.css) -----------------------------
+
+  const ui = (() => {
+    let el = null;
+    let status = 'disconnected';
+    let project = '';
+
+    function mount() {
+      if (el || !document.body) return;
+      el = document.createElement('div');
+      el.id = 'scratch-mcp-status';
+      el.innerHTML =
+        '<span class="label">scratch-mcp</span><span class="path"></span>';
+      document.body.appendChild(el);
+      render();
+    }
+
+    function render() {
+      if (!el) return;
+      el.dataset.status = status;
+      el.querySelector('.path').textContent = project
+        ? `· ${project.split(/[/\\]/).pop()}`
+        : '';
+      el.title = project ? `${status} · ${project}` : status;
+    }
+
+    return {
+      setStatus(next) {
+        status = next;
+        mount();
+        render();
+      },
+      setProject(path) {
+        project = path;
+        render();
+      },
+    };
+  })();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', connect);
+  } else {
+    connect();
+  }
+})();

@@ -1,0 +1,45 @@
+/* scratch-mcp live-reload status badge (see userscript.js). */
+#scratch-mcp-status {
+  position: fixed;
+  bottom: 8px;
+  right: 8px;
+  z-index: 99999;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font:
+    12px/1.4 system-ui,
+    sans-serif;
+  color: #cdd6f4;
+  background: #1e1e2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  opacity: 0.9;
+  pointer-events: none;
+  user-select: none;
+}
+
+#scratch-mcp-status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f38ba8; /* disconnected */
+}
+
+#scratch-mcp-status[data-status='connecting']::before {
+  background: #f9e2af;
+}
+
+#scratch-mcp-status[data-status='connected']::before {
+  background: #a6e3a1;
+}
+
+#scratch-mcp-status .label {
+  font-weight: 600;
+}
+
+#scratch-mcp-status .path {
+  opacity: 0.7;
+}
