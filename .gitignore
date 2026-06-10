@@ -9,6 +9,10 @@ dist/
 storybook-static
 doc_build/
 
+# Example output
+examples/out/
+packages/*/examples/out/
+
 # IDE
 .vscode/*
 !.vscode/extensions.json
