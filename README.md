@@ -4,6 +4,8 @@ A pnpm monorepo for working with Scratch `.sb3` projects from JavaScript —
 edit them programmatically, drive them from an AI agent, and preview the results
 live in TurboWarp Desktop.
 
+📖 **Documentation:** https://playforge-coding.github.io/scratch4js/
+
 ## Packages
 
 | Path                                           | Package       | What it is                                                                                           |

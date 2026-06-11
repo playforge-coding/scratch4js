@@ -1,0 +1,62 @@
+name: Deploy docs to GitHub Pages
+
+# Builds the Rspress docs site and publishes it to GitHub Pages on every push to
+# main. The site is served from https://playforge-coding.github.io/scratch4js/,
+# which is why rspress.config.ts sets `base: '/scratch4js/'`.
+#
+# Setup (one time): in the repo Settings -> Pages, set "Source" to
+# "GitHub Actions". No secrets or tokens are required.
+on:
+  push:
+    branches: [main]
+  # Allow running the workflow manually from the Actions tab.
+  workflow_dispatch:
+
+# Allow the GITHUB_TOKEN to deploy to Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; don't cancel an in-progress production deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build docs
+        run: pnpm run docs:build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # rspress build outputs to doc_build/ by default.
+          path: doc_build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
