@@ -25,7 +25,15 @@ export default {
   },
   plugins: [
     new TurboWarpExtensionPlugin({
-      name: 'Multi-File Example',
+      // Registry metadata — injected as the `// Name:` / `// ID:` / … header
+      // the TurboWarp extensions gallery requires. `id` must match getInfo().id.
+      metadata: {
+        name: 'Multi-File Example',
+        id: 'multifileexample',
+        description: 'A demo extension bundled from several files.',
+        by: 'playforge-coding',
+        license: 'MPL-2.0',
+      },
       // This example uses Scratch.BlockType but not the VM, so it works both
       // sandboxed and unsandboxed. Set `unsandboxed: true` if you need the VM.
       unsandboxed: false,

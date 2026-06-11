@@ -97,15 +97,77 @@ Build it, then load `dist/my-extension.js` in TurboWarp via **add extension → 
 
 ## Options
 
-| Option          | Type                 | Default                    | Description                                                                                                     |
-| --------------- | -------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `register`      | `boolean`            | `true`                     | Append the `Scratch.extensions.register(...)` call. Set `false` to call `register()` yourself inside your code. |
-| `unsandboxed`   | `boolean`            | `false`                    | Emit a guard that throws unless the extension runs unsandboxed (`Scratch.extensions.unsandboxed`).              |
-| `name`          | `string`             | `"This extension"`         | Name used in the unsandboxed-guard error message.                                                               |
-| `libraryExport` | `string \| string[]` | `"default"`                | Which export of the entry module is the extension. Use a named export instead of the default if you prefer.     |
-| `varName`       | `string`             | `"__turbowarpExtension__"` | Internal identifier the export is assigned to before registration. Change only on an unlucky name collision.    |
+| Option          | Type                 | Default                    | Description                                                                                                                                                          |
+| --------------- | -------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `metadata`      | `object`             | —                          | Registry header injected as `// Name:` / `// ID:` / … comment lines (see [below](#submitting-to-the-gallery)).                                                       |
+| `inlineAssets`  | `boolean \| RegExp`  | `true`                     | Inline imported assets (svg/png/…) as base64 `data:` URIs so `import icon from './icon.svg'` works (see [below](#icons)). `RegExp` to customize, `false` to disable. |
+| `register`      | `boolean`            | `true`                     | Append the `Scratch.extensions.register(...)` call. Set `false` to call `register()` yourself inside your code.                                                      |
+| `unsandboxed`   | `boolean`            | `false`                    | Emit a guard that throws unless the extension runs unsandboxed (`Scratch.extensions.unsandboxed`).                                                                   |
+| `name`          | `string`             | `metadata.name`            | Name used in the unsandboxed-guard error message. Falls back to `metadata.name`, then `"This extension"`.                                                            |
+| `libraryExport` | `string \| string[]` | `"default"`                | Which export of the entry module is the extension. Use a named export instead of the default if you prefer.                                                          |
+| `varName`       | `string`             | `"__turbowarpExtension__"` | Internal identifier the export is assigned to before registration. Change only on an unlucky name collision.                                                         |
 
 `register` accepts either a **class** (it's instantiated with `new`) or an already-constructed **instance** (registered as-is).
+
+## Submitting to the gallery
+
+The [TurboWarp extensions gallery](https://github.com/TurboWarp/extensions) requires a metadata header — a block of `// Key: Value` comments at the very top of the file. Pass `metadata` and the plugin emits it above the IIFE:
+
+```js
+new TurboWarpExtensionPlugin({
+  metadata: {
+    name: 'Consoles',
+    id: 'sipcconsole', // must match getInfo().id
+    description: 'Blocks that interact with the developer console.',
+    by: '-SIPC-', // or an array → one `// By:` line each
+    license: 'MIT',
+  },
+});
+```
+
+produces, at the top of the bundle:
+
+```js
+// Name: Consoles
+// ID: sipcconsole
+// Description: Blocks that interact with the developer console.
+// By: -SIPC-
+// License: MIT
+
+(function (Scratch) {
+  /* …your bundle… */
+})(Scratch);
+```
+
+Fields are emitted in the conventional order **Name → ID → Description → By → Original → License → Context**; `by`/`original` accept an array for multiple lines, and any extra keys you add are appended verbatim (`// extra: …`). The header is added _after_ minification, so it's never stripped.
+
+## Icons
+
+`menuIconURI` / `blockIconURI` expect a `data:` URI. With `inlineAssets` on (the default), just **import the image** — the plugin configures the bundler to inline it as a base64 `data:` URI string:
+
+```js
+import iconURI from './icon.svg'; // → "data:image/svg+xml;base64,…"
+
+export default class MyExtension {
+  getInfo() {
+    return {
+      id: 'myextension',
+      name: 'My Extension',
+      menuIconURI: iconURI,
+      blocks: [
+        /* … */
+      ],
+    };
+  }
+}
+```
+
+Details:
+
+- `svg`, `png`, `jpg`, `gif`, `webp`, and `avif` imports are inlined by default. Pass a `RegExp` to match your own set (`inlineAssets: /\.(svg|png)$/i`), or `inlineAssets: false` to leave asset handling to your own config.
+- Inlining (rather than emitting a separate file) is required: a TurboWarp extension is a **single file** and can't reference external assets.
+- **TypeScript:** add an asset module declaration so the import is typed, e.g. `declare module '*.svg' { const url: string; export default url; }`.
+- If you build with **Rsbuild/Rslib** (which already handle SVG imports), set `inlineAssets: false` to avoid a duplicate asset rule.
 
 ## Notes & caveats
 

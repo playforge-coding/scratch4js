@@ -5,12 +5,15 @@
 
 import { greet } from './blocks/greeting.js';
 import { add } from './blocks/math.js';
+// The plugin inlines this as a base64 `data:` URI string (via `inlineAssets`).
+import iconURI from './icon.svg';
 
 export default class MultiFileExample {
   getInfo() {
     return {
       id: 'multifileexample',
       name: 'Multi-File Example',
+      menuIconURI: iconURI,
       blocks: [
         {
           opcode: 'hello',
