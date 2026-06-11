@@ -1,7 +1,7 @@
 {
   "name": "scratch-mcp",
   "description": "Model Context Protocol server for editing Scratch .sb3 projects via scratch4js.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "license": "MPL-2.0",
   "author": "playforge-coding",
