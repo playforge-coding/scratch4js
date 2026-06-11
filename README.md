@@ -8,11 +8,12 @@ live in TurboWarp Desktop.
 
 ## Packages
 
-| Path                                           | Package       | What it is                                                                                           |
-| ---------------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------- |
-| [`packages/scratch4js`](packages/scratch4js)   | `scratch4js`  | The core library: read/edit `.sb3` files with a small, declarative API.                              |
-| [`packages/scratch-mcp`](packages/scratch-mcp) | `scratch-mcp` | An MCP server exposing the library's editing surface as tools, plus a TurboWarp live-reload bridge.  |
-| [`userscript`](userscript)                     | —             | Prebuilt TurboWarp Desktop userscript + userstyle that live-reload the project the MCP server edits. |
+| Path                                                       | Package             | What it is                                                                                           |
+| ---------------------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------- |
+| [`packages/scratch4js`](packages/scratch4js)               | `scratch4js`        | The core library: read/edit `.sb3` files with a small, declarative API.                              |
+| [`packages/scratch-mcp`](packages/scratch-mcp)             | `scratch-mcp`       | An MCP server exposing the library's editing surface as tools, plus a TurboWarp live-reload bridge.  |
+| [`packages/tw-plugin-webpack`](packages/tw-plugin-webpack) | `tw-plugin-webpack` | webpack/Rspack plugin that bundles a multi-file TurboWarp extension into one IIFE-wrapped file.      |
+| [`userscript`](userscript)                                 | —                   | Prebuilt TurboWarp Desktop userscript + userstyle that live-reload the project the MCP server edits. |
 
 ## How they fit together
 

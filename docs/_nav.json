@@ -12,5 +12,10 @@
   {
     "text": "MCP server",
     "link": "/guide/mcp-server"
+  },
+  {
+    "text": "Extension bundler",
+    "link": "/tw-plugin-webpack/",
+    "activeMatch": "/tw-plugin-webpack/"
   }
 ]

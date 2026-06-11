@@ -1,8 +1,11 @@
 name: Publish to npm
 
-# Publishes scratch4js and scratch-mcp to the public npm registry whenever a
-# GitHub Release is published. Make sure the versions in packages/*/package.json
-# match the release tag before you publish.
+# Publishes every public workspace package — currently scratch4js, scratch-mcp,
+# and tw-plugin-webpack — to the public npm registry whenever a GitHub Release
+# is published. Any non-private package under packages/* is picked up
+# automatically by the version check and `pnpm -r publish` below, so new
+# packages need no workflow changes. Make sure the versions in
+# packages/*/package.json match the release tag before you publish.
 #
 # Setup (one time):
 #   1. Create an npm Granular Access Token (npmjs.com -> Access Tokens ->
