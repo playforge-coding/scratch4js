@@ -15,7 +15,17 @@
   },
   {
     "text": "Extension bundler",
-    "link": "/tw-plugin-webpack/",
-    "activeMatch": "/tw-plugin-webpack/"
+    "items": [
+      {
+        "text": "webpack / Rspack",
+        "link": "/tw-plugin-webpack/",
+        "activeMatch": "/tw-plugin-webpack/"
+      },
+      {
+        "text": "Rollup / Rolldown / Vite",
+        "link": "/tw-plugin-rollup/",
+        "activeMatch": "/tw-plugin-rollup/"
+      }
+    ]
   }
 ]

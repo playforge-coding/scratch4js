@@ -1,0 +1,18 @@
+{
+  // Plain-JS library: this config exists so rslib can emit `.d.ts` files from
+  // the JSDoc types in `src/`. It is type-checking config only — no JS is built
+  // by tsc (rslib/Rspack handles that).
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "rootDir": "src"
+  },
+  "include": ["src"]
+}
