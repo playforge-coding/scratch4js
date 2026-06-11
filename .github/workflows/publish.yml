@@ -1,0 +1,75 @@
+name: Publish to npm
+
+# Publishes scratch4js and scratch-mcp to the public npm registry whenever a
+# GitHub Release is published. Make sure the versions in packages/*/package.json
+# match the release tag before you publish.
+#
+# Setup (one time):
+#   1. Create an npm Granular Access Token (npmjs.com -> Access Tokens ->
+#      Generate New Token -> Granular Access Token) with "Read and write"
+#      package permission. For the first publish the packages don't exist yet,
+#      so scope it to "All packages"; you can narrow it afterwards. Granular
+#      tokens bypass the 2FA prompt, which CI requires.
+#   2. Add it to this repo as a secret named NPM_TOKEN
+#      (Settings -> Secrets and variables -> Actions).
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fail fast (before install/build) if any package version disagrees with
+      # the release tag. Strips a leading "v" so both v1.2.3 and 1.2.3 work.
+      - name: Verify versions match release tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          expected="${RELEASE_TAG#v}"
+          echo "Release version: $expected"
+          failed=0
+          for pkg in packages/*/package.json; do
+            if [ "$(node -p "!!require('./$pkg').private")" = "true" ]; then
+              echo "Skipping private package $pkg"
+              continue
+            fi
+            name="$(node -p "require('./$pkg').name")"
+            version="$(node -p "require('./$pkg').version")"
+            if [ "$version" != "$expected" ]; then
+              echo "::error file=$pkg::$name is $version but the release tag is $expected"
+              failed=1
+            else
+              echo "OK: $name@$version"
+            fi
+          done
+          exit $failed
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Build
+        run: pnpm -r build
+
+      # Publishes every workspace package that isn't marked private, in
+      # dependency order. pnpm rewrites the `workspace:*` dependency on
+      # scratch4js to the real version as it publishes.
+      - name: Publish
+        run: pnpm -r publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

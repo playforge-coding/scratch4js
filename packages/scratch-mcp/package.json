@@ -3,12 +3,37 @@
   "description": "Model Context Protocol server for editing Scratch .sb3 projects via scratch4js.",
   "version": "1.0.0",
   "type": "module",
+  "license": "MPL-2.0",
+  "author": "playforge-coding",
+  "homepage": "https://github.com/playforge-coding/scratch4js/tree/main/packages/scratch-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/playforge-coding/scratch4js.git",
+    "directory": "packages/scratch-mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/playforge-coding/scratch4js/issues"
+  },
+  "keywords": [
+    "scratch",
+    "sb3",
+    "mcp",
+    "model-context-protocol",
+    "turbowarp",
+    "ai"
+  ],
   "bin": {
     "scratch-mcp": "./src/index.js"
   },
   "files": [
     "src"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node src/index.js"
   },
