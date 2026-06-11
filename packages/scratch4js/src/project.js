@@ -1,6 +1,15 @@
 import JSZip from '@turbowarp/jszip';
 import { Sprite, Stage } from './target.js';
 
+/**
+ * The project's `meta` block.
+ *
+ * @typedef {object} ProjectMeta
+ * @property {string} semver - Scratch project schema version (e.g. `3.0.0`).
+ * @property {string} vm - VM version that wrote the project.
+ * @property {string} agent - User-agent string of the editor, if any.
+ */
+
 const DEFAULT_META = {
   semver: '3.0.0',
   vm: '14.0.0',
@@ -119,7 +128,7 @@ export class Project {
     );
   }
 
-  /** @returns {object} The project's `meta` block (semver, vm, agent). */
+  /** @returns {ProjectMeta} The project's `meta` block (semver, vm, agent). */
   get meta() {
     return this.json.meta;
   }

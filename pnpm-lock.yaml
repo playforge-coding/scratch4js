@@ -44,7 +44,10 @@ importers:
     devDependencies:
       '@rslib/core':
         specifier: ^0.22.0
-        version: 0.22.0
+        version: 0.22.0(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.0
+        version: 5.9.3
 
 packages:
 
@@ -863,6 +866,11 @@ packages:
     resolution: {integrity: sha512-faYHw0anBbc/kWF3zFTEnxSFOAGUX9GFbOBthvDdLsIlEoWOFOtS0zgCiQYwIskL9iGXZL3kAXD8OoZ4GmMATA==}
     engines: {node: '>= 18'}
 
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   unpipe@1.0.0:
     resolution: {integrity: sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==}
     engines: {node: '>= 0.8'}
@@ -1060,10 +1068,12 @@ snapshots:
     transitivePeerDependencies:
       - '@module-federation/runtime-tools'
 
-  '@rslib/core@0.22.0':
+  '@rslib/core@0.22.0(typescript@5.9.3)':
     dependencies:
       '@rsbuild/core': 2.0.11
-      rsbuild-plugin-dts: 0.22.0(@rsbuild/core@2.0.11)
+      rsbuild-plugin-dts: 0.22.0(@rsbuild/core@2.0.11)(typescript@5.9.3)
+    optionalDependencies:
+      typescript: 5.9.3
     transitivePeerDependencies:
       - '@module-federation/runtime-tools'
       - '@typescript/native-preview'
@@ -1619,10 +1629,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  rsbuild-plugin-dts@0.22.0(@rsbuild/core@2.0.11):
+  rsbuild-plugin-dts@0.22.0(@rsbuild/core@2.0.11)(typescript@5.9.3):
     dependencies:
       '@ast-grep/napi': 0.37.0
       '@rsbuild/core': 2.0.11
+    optionalDependencies:
+      typescript: 5.9.3
 
   safe-buffer@5.1.2: {}
 
@@ -1710,6 +1722,8 @@ snapshots:
       content-type: 2.0.0
       media-typer: 1.1.0
       mime-types: 3.0.2
+
+  typescript@5.9.3: {}
 
   unpipe@1.0.0: {}
 

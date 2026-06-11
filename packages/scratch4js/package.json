@@ -5,12 +5,19 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/cjs/index.cjs"
+      }
     },
     "./umd": "./dist/umd/index.js"
   },
-  "main": "./dist/index.cjs",
+  "main": "./dist/cjs/index.cjs",
+  "types": "./dist/esm/index.d.ts",
   "unpkg": "./dist/umd/index.js",
   "files": [
     "dist"
@@ -20,7 +27,8 @@
     "dev": "rslib --watch"
   },
   "devDependencies": {
-    "@rslib/core": "^0.22.0"
+    "@rslib/core": "^0.22.0",
+    "typescript": "^5.9.0"
   },
   "dependencies": {
     "@turbowarp/jszip": "^3.12.0"

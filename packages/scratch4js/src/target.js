@@ -309,6 +309,11 @@ export class Target {
  * broadcasts.
  */
 export class Stage extends Target {
+  /** @returns {true} Always the stage. Discriminates {@link Stage} from {@link Sprite}. */
+  get isStage() {
+    return true;
+  }
+
   /** @returns {number} Tempo for music blocks, in BPM. */
   get tempo() {
     return this.json.tempo ?? 60;
@@ -358,6 +363,11 @@ export class Stage extends Target {
  * A sprite: a movable target with a position, size and orientation.
  */
 export class Sprite extends Target {
+  /** @returns {false} Never the stage. Discriminates {@link Sprite} from {@link Stage}. */
+  get isStage() {
+    return false;
+  }
+
   /** @returns {number} X position on the stage (−240…240). */
   get x() {
     return this.json.x ?? 0;
