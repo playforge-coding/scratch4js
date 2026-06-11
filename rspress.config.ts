@@ -13,13 +13,11 @@ export default defineConfig({
   logo: '/favicon.svg',
   logoText: 'scratch4js',
   themeConfig: {
+    // Nav lives in docs/_nav.json and the sidebar is auto-generated from the
+    // _meta.json files. Defining `nav` or `sidebar` here would disable that
+    // file-based auto-generation, so keep both out of the config.
     outline: true,
     lastUpdated: true,
-    nav: [
-      { text: 'Guide', link: '/guide/introduction', activeMatch: '/guide/' },
-      { text: 'API', link: '/api/overview', activeMatch: '/api/' },
-      { text: 'MCP server', link: '/guide/mcp-server' },
-    ],
     socialLinks: [
       {
         icon: 'github',
