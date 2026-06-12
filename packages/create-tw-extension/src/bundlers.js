@@ -15,8 +15,8 @@ const PLUGIN_ROLLUP = 'tw-plugin-rollup';
 
 // Published versions of the scratch4js build plugins.
 const PLUGIN_VERSIONS = {
-  [PLUGIN_WEBPACK]: '^1.0.2',
-  [PLUGIN_ROLLUP]: '^1.0.2',
+  [PLUGIN_WEBPACK]: '^1.1.0',
+  [PLUGIN_ROLLUP]: '^1.1.0',
 };
 
 /**
