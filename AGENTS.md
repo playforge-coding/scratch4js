@@ -21,4 +21,4 @@ You are an expert in JavaScript, Rspack, Rsbuild, Rslib, and library development
 
 ### Prettier
 
-- Run `pnpm run format` to format your code
+- Run `pnpm run fmt` to format your code

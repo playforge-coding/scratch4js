@@ -4,12 +4,13 @@
  * The userscript shipped in this repo connects here as a plain WebSocket client.
  * The protocol is one JSON object per message, request/ack:
  *
- *   server → client:  { id, method: "loadSB3" | "start" | "stop", params? }
- *   client → server:  { id, ok: true } | { id, ok: false, error }
+ *   server → client:  { id, method: "loadSB3" | "start" | "stop" | "screenshot", params? }
+ *   client → server:  { id, ok: true, result? } | { id, ok: false, error }
  *
  * To (re)load a project the server sends `loadSB3` with a file path; the client
  * fetches the bytes back from `GET /get.sb3?path=…` and loads them into the VM.
- * `start`/`stop` drive the green flag.
+ * `start`/`stop` drive the green flag. `screenshot` returns a PNG data URL of
+ * the live stage in its `result`, so an agent can see what the VM rendered.
  *
  * All logging goes to stderr — stdout is reserved for the MCP JSON-RPC stream.
  *
@@ -109,7 +110,11 @@ export class Bridge {
     const settle = this._pending.get(msg?.id);
     if (settle) {
       this._pending.delete(msg.id);
-      settle(msg.ok ? { ok: true } : { ok: false, error: msg.error });
+      settle(
+        msg.ok
+          ? { ok: true, result: msg.result }
+          : { ok: false, error: msg.error },
+      );
     }
   }
 
@@ -170,6 +175,23 @@ export class Bridge {
   /** Stop every connected userscript. */
   stop() {
     return this._broadcast('stop');
+  }
+
+  /**
+   * Ask one connected userscript for a PNG snapshot of the live stage.
+   *
+   * @returns {Promise<string|null>} A `data:image/png;base64,…` URL, or null if
+   *   no userscript is connected.
+   * @throws If the userscript is connected but the snapshot fails.
+   */
+  async screenshot() {
+    const [ws] = [...this.wss.clients].filter((c) => c.readyState === c.OPEN);
+    if (!ws) return null;
+    const ack = await this._send(ws, 'screenshot');
+    if (!ack.ok) throw new Error(ack.error || 'screenshot failed');
+    const dataURL = ack.result?.dataURL;
+    if (!dataURL) throw new Error('userscript returned no image');
+    return dataURL;
   }
 
   /** Shut the bridge down. */

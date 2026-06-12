@@ -62,10 +62,11 @@ expects `9060`; rebuild it from source if you need a different one).
 The userscript opens a WebSocket to the bridge and answers JSON requests:
 
 ```
-bridge → us:  { id, method: "loadSB3" | "start" | "stop", params? }
-us → bridge:  { id, ok: true } | { id, ok: false, error }
+bridge → us:  { id, method: "loadSB3" | "start" | "stop" | "screenshot", params? }
+us → bridge:  { id, ok: true, result? } | { id, ok: false, error }
 ```
 
 On `loadSB3` it fetches the bytes from `GET /get.sb3?path=…` and calls
-`vm.loadProject(...)`; `start`/`stop` call `vm.greenFlag()` / `vm.stopAll()`.
-It reconnects automatically if the server restarts.
+`vm.loadProject(...)`; `start`/`stop` call `vm.greenFlag()` / `vm.stopAll()`;
+`screenshot` calls the renderer's `requestSnapshot` and returns the stage as a
+PNG data URL. It reconnects automatically if the server restarts.

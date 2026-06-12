@@ -1,4 +1,5 @@
 packages:
   - 'packages/*'
+blockExoticSubdeps: false
 allowBuilds:
   core-js: false

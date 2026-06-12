@@ -16,6 +16,14 @@ import { Project } from 'scratch4js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { startBridge } from './bridge.js';
+import { HeadlessRuntime } from './runtime.js';
+
+/**
+ * Headless VM for running and testing the open project. It loads a fresh copy
+ * of whatever is in memory (via `vm_load`), so an agent's edits are reflected
+ * on the next load. Lazy: the VM is only required the first time it is used.
+ */
+const runtime = new HeadlessRuntime();
 
 /**
  * The TurboWarp Desktop live-reload bridge, or null if it could not start
@@ -91,8 +99,26 @@ const ok = (value) => ({
 
 const server = new McpServer(
   { name: 'scratch-mcp', version: '1.0.0' },
-  { capabilities: { tools: {} } },
+  { capabilities: { tools: {}, logging: {} } },
 );
+
+// Stream notable runtime events (say/think, broadcasts, green flag, question/
+// answer, errors) to the client as MCP log notifications. The client controls
+// the firehose with the standard `logging/setLevel` request — the SDK drops any
+// message below the level it asked for — so this is silent until a client opts
+// in (e.g. by selecting "info" or "debug"). Activity events are `info`, run
+// boundaries and bubble-clears are `debug`, and runtime/compile errors `error`.
+runtime.onEvent = (event) => {
+  server
+    .sendLoggingMessage({
+      level: event.level,
+      logger: 'scratch-vm',
+      data: event,
+    })
+    .catch(() => {
+      // Never let a logging failure (e.g. not yet connected) break a tool call.
+    });
+};
 
 /**
  * Register a tool whose handler may throw; thrown errors become a clean,
@@ -534,6 +560,184 @@ tool(
     if (!bridge) throw new Error('Live-reload bridge is not running.');
     await bridge.stop();
     return { stopped: bridge.clients };
+  },
+);
+
+// --- Headless runtime (run & test the project in-process) -------------------
+
+tool(
+  'vm_load',
+  {
+    title: 'Load project into the runtime',
+    description:
+      'Load the open project into a headless Scratch VM (TurboWarp, JIT) for ' +
+      'running and testing — no browser needed. Reflects the current in-memory ' +
+      'edits; call again after editing to pick up changes. Returns a state snapshot.',
+    inputSchema: {},
+  },
+  async () => {
+    const bytes = await openProject().save();
+    return runtime.loadFromBytes(bytes);
+  },
+);
+
+tool(
+  'vm_green_flag',
+  {
+    title: 'Green flag',
+    description:
+      'Press the green flag in the headless runtime (clears bubbles, the pending ' +
+      'question and errors, then starts scripts). Does not advance time on its ' +
+      'own — call `vm_run` to step the VM. Run `vm_load` first.',
+    inputSchema: {},
+  },
+  () => {
+    runtime.greenFlag();
+    return { greenFlag: true };
+  },
+);
+
+tool(
+  'vm_run',
+  {
+    title: 'Run the runtime',
+    description:
+      'Advance the headless VM, then return a state snapshot. By default it runs ' +
+      'in real time until every script finishes (so waits, timers and glides ' +
+      'behave) or the budget elapses. Returns sprite positions, variables, lists, ' +
+      'monitors, say/think bubbles, any pending question, running-thread count and errors. ' +
+      'Also returns `events`: the ordered timeline of what happened since the previous ' +
+      'vm_run (say/think, broadcasts, question/answer, errors), so you can assert on ' +
+      'sequence, not just final state.',
+    inputSchema: {
+      seconds: z
+        .number()
+        .positive()
+        .optional()
+        .describe('Real-time budget in seconds (default 10, max 60).'),
+      frames: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe('Frame budget instead of `seconds` (1 frame ≈ 1/30 s).'),
+      untilIdle: z
+        .boolean()
+        .optional()
+        .describe('Stop early once no scripts are running (default true).'),
+      paced: z
+        .boolean()
+        .optional()
+        .describe(
+          'Sleep one frame between steps so time-based blocks elapse (default ' +
+            'true). Set false to step as fast as possible.',
+        ),
+    },
+  },
+  (opts) => runtime.run(opts),
+);
+
+tool(
+  'vm_stop',
+  {
+    title: 'Stop the runtime',
+    description: 'Stop every running script in the headless VM.',
+    inputSchema: {},
+  },
+  () => {
+    runtime.stop();
+    return { stopped: true };
+  },
+);
+
+tool(
+  'vm_state',
+  {
+    title: 'Runtime state',
+    description:
+      'A structured snapshot of the headless VM right now: every target with its ' +
+      'position/size/direction/costume/visibility, variables and lists, visible ' +
+      'monitors, say/think bubbles, the pending question, running-thread count and errors. ' +
+      'Assert against these rather than a screenshot.',
+    inputSchema: {},
+  },
+  () => runtime.summary(),
+);
+
+tool(
+  'vm_input',
+  {
+    title: 'Send input',
+    description:
+      'Feed input into the headless VM the way the editor would: key presses, ' +
+      'mouse position/clicks, and answers to `ask and wait`. Stage coordinates ' +
+      'run -240..240 (x) and -180..180 (y).',
+    inputSchema: {
+      keys: z
+        .array(
+          z.object({
+            key: z
+              .string()
+              .describe('Scratch key name: "space", "up arrow", "a", "1", …'),
+            isDown: z
+              .boolean()
+              .optional()
+              .describe('Hold (true) or release (false). Omit for a full tap.'),
+          }),
+        )
+        .optional(),
+      mouseX: z
+        .number()
+        .optional()
+        .describe('Mouse x in stage coords (-240..240).'),
+      mouseY: z
+        .number()
+        .optional()
+        .describe('Mouse y in stage coords (-180..180).'),
+      mouseDown: z.boolean().optional().describe('Mouse button state.'),
+      answer: z
+        .string()
+        .optional()
+        .describe('Answer the pending `ask and wait` question.'),
+    },
+  },
+  (input) => runtime.input(input),
+);
+
+server.registerTool(
+  'screenshot',
+  {
+    title: 'Screenshot the stage',
+    description:
+      'Capture a PNG of the live stage from a connected TurboWarp Desktop editor ' +
+      '(via the live-reload bridge + userscript). This is the real renderer, so ' +
+      'load and run the project there first (`save_project`/`run_project`). For ' +
+      'logic checks prefer `vm_state` — pixels are a poor substitute for values.',
+    inputSchema: {},
+  },
+  async () => {
+    try {
+      if (!bridge) throw new Error('Live-reload bridge is not running.');
+      const dataURL = await bridge.screenshot();
+      if (!dataURL)
+        throw new Error(
+          'No TurboWarp Desktop userscript is connected to screenshot.',
+        );
+      const base64 = dataURL.replace(/^data:image\/png;base64,/, '');
+      return {
+        content: [{ type: 'image', data: base64, mimeType: 'image/png' }],
+      };
+    } catch (err) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: 'text',
+            text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+          },
+        ],
+      };
+    }
   },
 );
 

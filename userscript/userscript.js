@@ -5,8 +5,8 @@
 // appear in the editor instantly.
 //
 // Protocol (JSON over WebSocket):
-//   bridge → us:  { id, method: "loadSB3" | "start" | "stop", params? }
-//   us → bridge:  { id, ok: true } | { id, ok: false, error }
+//   bridge → us:  { id, method: "loadSB3" | "start" | "stop" | "screenshot", params? }
+//   us → bridge:  { id, ok: true, result? } | { id, ok: false, error }
 //
 // TurboWarp Desktop loads this file automatically from its config directory.
 // No build step: it is plain source using the browser's WebSocket and fetch.
@@ -45,6 +45,19 @@
     },
     async stop() {
       vm.stopAll();
+    },
+    // Snapshot the live stage as a PNG data URL. `requestSnapshot` forces a
+    // render and reads the pixels back, so it works regardless of whether the
+    // WebGL context preserves its drawing buffer.
+    async screenshot() {
+      const renderer = vm.renderer;
+      if (!renderer || typeof renderer.requestSnapshot !== 'function') {
+        throw new Error('renderer unavailable');
+      }
+      const dataURL = await new Promise((resolve) =>
+        renderer.requestSnapshot(resolve),
+      );
+      return { dataURL };
     },
   };
 
@@ -86,16 +99,21 @@
       return;
     }
     try {
-      await handler(params || {});
-      reply(id, true);
+      const result = await handler(params || {});
+      reply(id, true, result);
     } catch (err) {
       reply(id, false, err && err.message ? err.message : String(err));
     }
   }
 
-  function reply(id, ok, error) {
+  // On success `payload` is the handler's return value (sent as `result`); on
+  // failure it is the error message (sent as `error`).
+  function reply(id, ok, payload) {
     if (id == null || !socket || socket.readyState !== WebSocket.OPEN) return;
-    socket.send(JSON.stringify(ok ? { id, ok } : { id, ok, error }));
+    const msg = ok
+      ? { id, ok: true, result: payload }
+      : { id, ok: false, error: payload };
+    socket.send(JSON.stringify(msg));
   }
 
   // --- Status toolbar (styled by userstyle.css) -----------------------------
