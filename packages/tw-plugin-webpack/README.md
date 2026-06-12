@@ -172,7 +172,7 @@ Details:
 ## Notes & caveats
 
 - **One file only.** TurboWarp loads a single `<script>`, so don't use dynamic `import()` / code splitting — keep it one synchronous bundle.
-- **`Scratch` is a global**, not an import. Your editor/linter may flag it; declare it as a readonly global (e.g. in ESLint `languageOptions.globals`). For TypeScript, [`@turbowarp/types`](https://github.com/TurboWarp/types) provides the `Scratch` typings.
+- **`Scratch` is a global**, not an import. Your editor/linter may flag it; declare it as a readonly global (e.g. in ESLint `languageOptions.globals`). For TypeScript, [`@turbowarp/types`](https://github.com/TurboWarp/types) provides the `Scratch` typings for **Scratch** extensions. If you're targeting **TurboWarp or one of its forks**, use [`types-tw`](https://github.com/TurboWarp/types-tw) instead, which adds the TurboWarp-specific APIs. It's no longer published to npm, so install it from git — it keeps the `@turbowarp/types` package name as a drop-in replacement: `npm install @turbowarp/types@git+https://github.com/TurboWarp/types-tw.git#tw`.
 - **Source maps:** prefer `devtool: false`. A trailing `//# sourceMappingURL=` comment would otherwise sit in the middle of the wrapped file.
 
 ## Is a plugin the best way to do this?
