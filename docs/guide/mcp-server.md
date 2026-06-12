@@ -52,6 +52,20 @@ pnpm --filter scratch-mcp start  # serves MCP over stdio
 Set `SCRATCH_MCP_BRIDGE_PORT` to change the bridge port (default `9060`). If the
 port is taken the server still starts; only live reload is disabled.
 
+## Install as an MCP Bundle (`.mcpb`)
+
+For one-click installation in Claude Desktop and other MCPB-aware clients, build
+an [MCP Bundle](https://github.com/anthropics/mcpb) — a single `.mcpb` file with
+the server and a self-contained `node_modules`:
+
+```bash
+pnpm --filter scratch-mcp mcpb   # → packages/scratch-mcp/dist/scratch-mcp-<version>.mcpb
+```
+
+Open the resulting file in your client (in Claude Desktop, drag it into
+Settings → Extensions). Its one setting is the live-reload bridge port; nothing
+else needs configuring.
+
 ## Tools
 
 **Project**

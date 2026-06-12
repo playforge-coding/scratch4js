@@ -1,0 +1,167 @@
+{
+  "manifest_version": "0.3",
+  "name": "scratch-mcp",
+  "display_name": "Scratch (scratch4js)",
+  "version": "1.0.1",
+  "description": "Edit, run and test Scratch .sb3 projects from an AI agent.",
+  "long_description": "An MCP server, built on scratch4js, that lets an agent edit Scratch `.sb3` projects (sprites, scripts data, costumes, sounds, variables, lists) and **run and test** them in a headless TurboWarp VM — reading back structured state (variables, sprite positions, say/think bubbles, monitors) and an event timeline, with no browser needed. It can also live-reload edits and capture screenshots in TurboWarp Desktop when the companion userscript is installed.",
+  "author": {
+    "name": "playforge-coding",
+    "url": "https://github.com/playforge-coding"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/playforge-coding/scratch4js.git"
+  },
+  "homepage": "https://github.com/playforge-coding/scratch4js/tree/main/packages/scratch-mcp#readme",
+  "documentation": "https://github.com/playforge-coding/scratch4js/tree/main/packages/scratch-mcp#readme",
+  "support": "https://github.com/playforge-coding/scratch4js/issues",
+  "icon": "icon.png",
+  "license": "MPL-2.0",
+  "keywords": ["scratch", "sb3", "turbowarp", "scratch4js", "game", "ai"],
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "SCRATCH_MCP_BRIDGE_PORT": "${user_config.bridge_port}"
+      }
+    }
+  },
+  "user_config": {
+    "bridge_port": {
+      "type": "number",
+      "title": "Live-reload bridge port",
+      "description": "Port for the TurboWarp Desktop live-reload + screenshot bridge. If the port is busy the server still runs; only live reload and screenshots are disabled.",
+      "default": 9060,
+      "min": 0,
+      "max": 65535,
+      "required": false
+    }
+  },
+  "tools": [
+    {
+      "name": "open_project",
+      "description": "Load an .sb3 file from disk into memory for editing."
+    },
+    {
+      "name": "save_project",
+      "description": "Write the open project back to an .sb3 file (and live-reload it)."
+    },
+    {
+      "name": "project_info",
+      "description": "Summarize the open project: targets, extensions, monitors and meta."
+    },
+    {
+      "name": "list_sprites",
+      "description": "List every sprite with its position, size and media."
+    },
+    {
+      "name": "get_target",
+      "description": "Full details for one target (a sprite or the stage)."
+    },
+    {
+      "name": "set_sprite",
+      "description": "Update properties of a sprite (position, size, direction, visibility, …)."
+    },
+    { "name": "add_sprite", "description": "Add a new, empty sprite." },
+    {
+      "name": "remove_sprite",
+      "description": "Delete a sprite and any assets only it used."
+    },
+    {
+      "name": "rename_target",
+      "description": "Rename a sprite (or the stage)."
+    },
+    {
+      "name": "set_stage",
+      "description": "Update stage-level properties: tempo, video, volume."
+    },
+    {
+      "name": "set_variable",
+      "description": "Create or update a variable on a target by name."
+    },
+    {
+      "name": "delete_variable",
+      "description": "Delete a variable from a target by name."
+    },
+    {
+      "name": "set_list",
+      "description": "Create or replace a list on a target by name."
+    },
+    {
+      "name": "delete_list",
+      "description": "Delete a list from a target by name."
+    },
+    {
+      "name": "add_broadcast",
+      "description": "Add a broadcast message to the project."
+    },
+    {
+      "name": "add_costume",
+      "description": "Add a costume to a target from an image file on disk."
+    },
+    {
+      "name": "remove_costume",
+      "description": "Remove a costume from a target by name."
+    },
+    {
+      "name": "add_sound",
+      "description": "Add a sound to a target from an audio file on disk."
+    },
+    {
+      "name": "remove_sound",
+      "description": "Remove a sound from a target by name."
+    },
+    {
+      "name": "reload",
+      "description": "Tell connected TurboWarp Desktop userscripts to load an .sb3 from disk."
+    },
+    {
+      "name": "run_project",
+      "description": "Press the green flag in connected TurboWarp Desktop userscripts."
+    },
+    {
+      "name": "stop_project",
+      "description": "Stop running in connected TurboWarp Desktop userscripts."
+    },
+    {
+      "name": "vm_load",
+      "description": "Load the open project into a headless Scratch VM for running and testing."
+    },
+    {
+      "name": "vm_green_flag",
+      "description": "Press the green flag in the headless runtime."
+    },
+    {
+      "name": "vm_run",
+      "description": "Advance the headless VM, then return state plus an event timeline."
+    },
+    {
+      "name": "vm_stop",
+      "description": "Stop every running script in the headless VM."
+    },
+    {
+      "name": "vm_state",
+      "description": "A structured snapshot of the headless VM's current runtime state."
+    },
+    {
+      "name": "vm_input",
+      "description": "Feed keyboard/mouse input and answers into the headless VM."
+    },
+    {
+      "name": "screenshot",
+      "description": "Capture a PNG of the live stage from a connected TurboWarp Desktop editor."
+    }
+  ],
+  "tools_generated": false,
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  }
+}

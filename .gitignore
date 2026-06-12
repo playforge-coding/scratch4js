@@ -13,6 +13,11 @@ doc_build/
 examples/out/
 packages/*/examples/out/
 
+# MCPB bundle build artifacts
+packages/scratch-mcp/build/
+*.mcpb
+*.tgz
+
 # IDE
 .vscode/*
 !.vscode/extensions.json
