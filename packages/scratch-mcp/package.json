@@ -42,6 +42,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.0",
     "scratch-render-fonts": "^1.0.252",
+    "sharp": "^0.35.1",
     "scratch-storage": "^6.2.1",
     "scratch-vm": "github:TurboWarp/scratch-vm#develop",
     "scratch4js": "workspace:*",

@@ -12,6 +12,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+import sharp from 'sharp';
 import { Project } from 'scratch4js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -941,7 +942,8 @@ server.registerTool(
       'Capture a PNG of the live stage from a connected TurboWarp Desktop editor ' +
       '(via the live-reload bridge + userscript). This is the real renderer, so ' +
       'load and run the project there first (`save_project`/`run_project`). For ' +
-      'logic checks prefer `vm_state` — pixels are a poor substitute for values.',
+      'logic checks prefer `vm_state` — pixels are a poor substitute for values. ' +
+      'For a much smaller payload use `screenshot_jpeg`.',
     inputSchema: {},
   },
   async () => {
@@ -955,6 +957,65 @@ server.registerTool(
       const base64 = dataURL.replace(/^data:image\/png;base64,/, '');
       return {
         content: [{ type: 'image', data: base64, mimeType: 'image/png' }],
+      };
+    } catch (err) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: 'text',
+            text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+          },
+        ],
+      };
+    }
+  },
+);
+
+server.registerTool(
+  'screenshot_jpeg',
+  {
+    title: 'Screenshot the stage (JPEG)',
+    description:
+      'Same capture as `screenshot`, but re-encoded as JPEG (via sharp) for a ' +
+      'much smaller payload. Prefer this version unless you need pixel fidelity — ' +
+      'JPEG is lossy, so fine UI detail and flat color edges may soften. Optional ' +
+      '`quality` (1-100, default 80).',
+    inputSchema: {
+      quality: z
+        .number()
+        .int()
+        .min(1)
+        .max(100)
+        .optional()
+        .describe(
+          'JPEG quality, 1-100. Higher is sharper and larger. Default 80.',
+        ),
+    },
+  },
+  async ({ quality }) => {
+    try {
+      if (!bridge) throw new Error('Live-reload bridge is not running.');
+      const dataURL = await bridge.screenshot();
+      if (!dataURL)
+        throw new Error(
+          'No TurboWarp Desktop userscript is connected to screenshot.',
+        );
+      const png = Buffer.from(
+        dataURL.replace(/^data:image\/png;base64,/, ''),
+        'base64',
+      );
+      const jpeg = await sharp(png)
+        .jpeg({ quality: quality ?? 80 })
+        .toBuffer();
+      return {
+        content: [
+          {
+            type: 'image',
+            data: jpeg.toString('base64'),
+            mimeType: 'image/jpeg',
+          },
+        ],
       };
     } catch (err) {
       return {
