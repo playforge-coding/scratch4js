@@ -18,28 +18,33 @@ re-import.
 ## Install
 
 TurboWarp Desktop automatically loads a file named `userscript.js` and a file
-named `userstyle.css` from its config directory. Copy both files from this
-folder there, then fully restart TurboWarp Desktop.
-
-**Windows** (`%APPDATA%\turbowarp-desktop`):
+named `userstyle.css` from its config directory. The easiest way to put them
+there is the install script (run from the repo root):
 
 ```bash
-cp userscript.js userstyle.css "/mnt/c/Users/$USER/AppData/Roaming/turbowarp-desktop/"
+pnpm install-userscript
 ```
 
-**macOS:**
+It detects the TurboWarp Desktop config directory for your platform (Windows,
+macOS, and Linux — both Flatpak and native installs) and copies both files in.
+**Fully restart TurboWarp Desktop afterwards** so it reloads the new userscript.
+
+> Re-run `pnpm install-userscript` whenever you edit `userscript.js` or
+> `userstyle.css` — TurboWarp loads its own copy, not the one in this repo.
+
+If your install lives somewhere the script doesn't find, point it at the
+directory explicitly:
 
 ```bash
-cp userscript.js userstyle.css \
-  "$HOME/Library/Containers/org.turbowarp.desktop/Data/Library/Application Support/turbowarp-desktop/"
+TWD_CONFIG_DIR=/path/to/turbowarp-desktop pnpm install-userscript
 ```
 
-**Linux** (Flatpak):
+Or copy the two files in by hand. Common config-directory locations:
 
-```bash
-cp userscript.js userstyle.css \
-  "$HOME/.var/app/org.turbowarp.TurboWarp/config/turbowarp-desktop/"
-```
+- **Windows:** `%APPDATA%\turbowarp-desktop`
+- **macOS:** `~/Library/Containers/org.turbowarp.desktop/Data/Library/Application Support/turbowarp-desktop`
+- **Linux (Flatpak):** `~/.var/app/org.turbowarp.TurboWarp/config/turbowarp-desktop`
+- **Linux (native / .deb / AppImage):** `~/.config/turbowarp-desktop`
 
 > The directory must already exist (it does after TurboWarp Desktop has run at
 > least once). Restart the app after copying.
@@ -70,3 +75,7 @@ On `loadSB3` it fetches the bytes from `GET /get.sb3?path=…` and calls
 `vm.loadProject(...)`; `start`/`stop` call `vm.greenFlag()` / `vm.stopAll()`;
 `screenshot` calls the renderer's `requestSnapshot` and returns the stage as a
 PNG data URL. It reconnects automatically if the server restarts.
+
+The userscript always returns PNG. The server's `screenshot_jpeg` tool re-encodes
+that PNG to JPEG (via `sharp`) for a smaller payload — no extra userscript method
+is involved.

@@ -11,7 +11,8 @@
     "docs:build": "rspress build",
     "docs:preview": "rspress preview",
     "fmt": "prettier --write .",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "install-userscript": "node userscript/install.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
