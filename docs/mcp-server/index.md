@@ -11,6 +11,11 @@ built on scratch4js. It keeps one project open in memory, exposes the library's
 editing surface as **MCP tools**, and saves back to disk — so an AI agent can
 edit `.sb3` projects through tool calls.
 
+It can also edit projects **directly on scratch.mit.edu** — log in, download a
+project, edit it, then (only with your confirmation) save and publish it back —
+via the [`s-api4js`](/s-api4js/) wrapper. See
+[Online projects](/mcp-server/online-projects).
+
 It also hosts a **live-reload bridge** on `http://localhost:9060`. With the
 [TurboWarp Desktop userscript](https://github.com/playforge-coding/scratch4js/tree/main/userscript)
 installed, every `save_project` reloads the project live in the editor, so an
@@ -30,6 +35,7 @@ agent's edits appear instantly.
 
 This section covers the [tool reference](/mcp-server/tools),
 [editing scripts](/mcp-server/editing-scripts) with the block catalog,
+[online projects](/mcp-server/online-projects) on scratch.mit.edu,
 [running & testing](/mcp-server/running-and-testing) in the headless VM, and
 [how live reload works](/mcp-server/live-reload).
 

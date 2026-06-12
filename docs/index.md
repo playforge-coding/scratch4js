@@ -35,4 +35,7 @@ features:
   - title: Drive it from an AI agent
     details: The companion scratch-mcp server exposes the whole editing surface as MCP tools — including a block catalog and JSON-patch script editing — with a live-reload bridge into TurboWarp Desktop.
     icon: 🤖
+  - title: Talk to scratch.mit.edu
+    details: The s-api4js wrapper reads public data (users, projects, studios, search) and logs in to download, edit and publish a project's .sb3 directly on the website. Cookies handled for you.
+    icon: 🔌
 ---
