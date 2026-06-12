@@ -26,7 +26,9 @@
       "command": "node",
       "args": ["${__dirname}/server/index.js"],
       "env": {
-        "SCRATCH_MCP_BRIDGE_PORT": "${user_config.bridge_port}"
+        "SCRATCH_MCP_BRIDGE_PORT": "${user_config.bridge_port}",
+        "SCRATCH_USER": "${user_config.user}",
+        "SCRATCH_PASS": "${user_config.pass}"
       }
     }
   },
@@ -38,6 +40,19 @@
       "default": 9060,
       "min": 0,
       "max": 65535,
+      "required": false
+    },
+    "user": {
+      "type": "string",
+      "title": "Scratch username",
+      "description": "Your scratch.mit.edu username, used to open, edit and publish online projects.",
+      "required": false
+    },
+    "pass": {
+      "type": "string",
+      "title": "Scratch password",
+      "description": "Your scratch.mit.edu password. Stored securely and used only to log in to Scratch.",
+      "sensitive": true,
       "required": false
     }
   },
