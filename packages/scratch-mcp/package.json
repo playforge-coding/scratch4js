@@ -46,6 +46,7 @@
     "scratch-storage": "^6.2.1",
     "scratch-vm": "github:TurboWarp/scratch-vm#develop",
     "scratch4js": "workspace:*",
+    "s-api4js": "workspace:*",
     "ws": "^8.21.0",
     "zod": "^3.25.0"
   },

@@ -55,6 +55,22 @@
       "description": "Summarize the open project: targets, extensions, monitors and meta."
     },
     {
+      "name": "scratch_login",
+      "description": "Log in to scratch.mit.edu to open, edit and publish online projects."
+    },
+    {
+      "name": "open_scratch_project",
+      "description": "Download a project from scratch.mit.edu by id and open it for editing."
+    },
+    {
+      "name": "push_to_scratch",
+      "description": "Save the open project back to scratch.mit.edu (asks the user to confirm)."
+    },
+    {
+      "name": "share_project",
+      "description": "Publish (share) a Scratch project publicly (asks the user to confirm)."
+    },
+    {
       "name": "list_sprites",
       "description": "List every sprite with its position, size and media."
     },

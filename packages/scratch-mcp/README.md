@@ -59,6 +59,23 @@ is stamped from `package.json` at build time).
 - `save_project { path?, compressionLevel? }` — write it back (and live-reload).
 - `project_info` — targets, extensions, monitors, meta.
 
+**Scratch website** (online projects, via [`s-api4js`](../s-api4js))
+
+- `scratch_login { username?, password? }` — log in to scratch.mit.edu
+  (defaults to `$SCRATCH_USER` / `$SCRATCH_PASS`). The session lives in memory
+  for the server process only.
+- `open_scratch_project { projectId }` — download a project by id and open it
+  for editing (shared projects need no login; your own unshared ones do).
+- `push_to_scratch { projectId?, confirm? }` — save the open project back to
+  scratch.mit.edu, overwriting it online (uploads assets, then `project.json`).
+- `share_project { projectId?, confirm? }` — publish a project so it's public.
+
+> `push_to_scratch` and `share_project` change the **live** project, so they
+> always ask you to confirm first — via an MCP
+> [elicitation](https://modelcontextprotocol.io/specification/draft/client/elicitation)
+> prompt when your client supports it, otherwise by requiring `confirm: true`
+> (which the agent should only set after you've agreed).
+
 **Reading**
 
 - `list_sprites` — every sprite with position/size/media.

@@ -14,6 +14,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import sharp from 'sharp';
 import { Project } from 'scratch4js';
+import { ScratchSession } from 's-api4js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { startBridge } from './bridge.js';
@@ -43,11 +44,51 @@ let bridge = null;
 
 /** The single project currently held open by the server. */
 const state = {
-  /** @type {string | null} Absolute path the project was loaded from. */
+  /** @type {string | null} Absolute path the project was loaded from, if any. */
   path: null,
   /** @type {import('scratch4js').Project | null} */
   project: null,
+  /**
+   * @type {import('s-api4js').ScratchSession | null} The Scratch session used
+   * for online reads/edits. Created on first use; authenticated by `scratch_login`.
+   */
+  session: null,
+  /**
+   * @type {number | string | null} The scratch.mit.edu project id the open
+   * project came from (set by `open_scratch_project`), used as the default
+   * target for `push_to_scratch` / `share_project`.
+   */
+  scratchProjectId: null,
 };
+
+/** @returns {import('s-api4js').ScratchSession} An (unauthenticated) session, created on demand. */
+function scratchSession() {
+  if (!state.session) state.session = new ScratchSession();
+  return state.session;
+}
+
+/** @returns {import('s-api4js').ScratchSession} The session, requiring login. */
+function loggedInSession() {
+  if (!state.session?.loggedIn)
+    throw new Error('Not logged in to Scratch. Call `scratch_login` first.');
+  return state.session;
+}
+
+/**
+ * Resolve the Scratch project id to act on: an explicit argument wins,
+ * otherwise the id the open project was loaded from.
+ *
+ * @param {number | string | undefined} projectId
+ * @returns {number | string}
+ */
+function resolveProjectId(projectId) {
+  const id = projectId ?? state.scratchProjectId;
+  if (id === null || id === undefined)
+    throw new Error(
+      'No Scratch project id. Pass `projectId`, or open one with `open_scratch_project` first.',
+    );
+  return id;
+}
 
 /** @returns {import('scratch4js').Project} The open project, or throws. */
 function openProject() {
@@ -154,6 +195,51 @@ function tool(name, config, handler) {
   });
 }
 
+/**
+ * Require explicit human confirmation before an outward-facing action (editing
+ * or publishing a live Scratch project). Prefers MCP elicitation so the *user*
+ * — not the model — approves; falls back to an explicit `confirm: true` tool
+ * argument when the client can't elicit. Throws (cancelling the action) if the
+ * user declines or confirmation can't be obtained.
+ *
+ * @param {string} message - What the user is being asked to approve.
+ * @param {boolean | undefined} fallbackConfirm - The tool's `confirm` argument.
+ */
+async function requireConfirmation(message, fallbackConfirm) {
+  const caps = server.server.getClientCapabilities?.();
+  if (caps?.elicitation) {
+    try {
+      const result = await server.server.elicitInput({
+        message,
+        requestedSchema: {
+          type: 'object',
+          title: 'Confirm',
+          properties: {
+            confirm: {
+              type: 'boolean',
+              title: 'Proceed',
+              description: message,
+            },
+          },
+          required: ['confirm'],
+        },
+      });
+      if (result.action === 'accept' && result.content?.confirm === true)
+        return;
+      throw new Error('Cancelled: the user did not confirm this action.');
+    } catch (err) {
+      // A genuine decline is final; only fall back when elicitation itself is
+      // unsupported by this client (older form-less capability advertisement).
+      if (/did not confirm|cancelled/i.test(String(err?.message))) throw err;
+    }
+  }
+  if (fallbackConfirm !== true)
+    throw new Error(
+      'This action affects the live Scratch project and needs confirmation. ' +
+        'Confirm with the user, then call again with `confirm: true`.',
+    );
+}
+
 // --- Project lifecycle ------------------------------------------------------
 
 tool(
@@ -226,6 +312,151 @@ tool(
       monitors: p.monitors.length,
       meta: p.meta,
     };
+  },
+);
+
+// --- Scratch website (online projects, via s-api4js) ------------------------
+
+tool(
+  'scratch_login',
+  {
+    title: 'Log in to Scratch',
+    description:
+      'Authenticate with a scratch.mit.edu account so the server can open your ' +
+      'projects from the website and (with your confirmation) save edits back ' +
+      'and publish them. Credentials default to the SCRATCH_USER / SCRATCH_PASS ' +
+      'environment variables if omitted. The session is kept in memory for this ' +
+      'server process only.',
+    inputSchema: {
+      username: z
+        .string()
+        .optional()
+        .describe('Scratch username. Defaults to $SCRATCH_USER.'),
+      password: z
+        .string()
+        .optional()
+        .describe('Scratch password. Defaults to $SCRATCH_PASS.'),
+    },
+  },
+  async ({ username, password }) => {
+    const user = username ?? process.env.SCRATCH_USER;
+    const pass = password ?? process.env.SCRATCH_PASS;
+    if (!user || !pass)
+      throw new Error(
+        'Missing credentials. Pass `username`/`password`, or set SCRATCH_USER and SCRATCH_PASS.',
+      );
+    state.session = await ScratchSession.login(user, pass);
+    return {
+      loggedIn: true,
+      username: state.session.username,
+      userId: state.session.userId,
+    };
+  },
+);
+
+tool(
+  'open_scratch_project',
+  {
+    title: 'Open a Scratch project from the website',
+    description:
+      'Download a project from scratch.mit.edu by id and hold it open in memory ' +
+      'for editing — the same in-memory project the other editing tools act on. ' +
+      'Shared projects open without login; your own unshared projects need ' +
+      '`scratch_login` first. Use `push_to_scratch` to save edits back.',
+    inputSchema: {
+      projectId: z
+        .union([z.number(), z.string()])
+        .describe('The scratch.mit.edu project id.'),
+    },
+  },
+  async ({ projectId }) => {
+    const { json, assets } =
+      await scratchSession().projects.download(projectId);
+    state.project = new Project(json, assets);
+    state.path = null;
+    state.scratchProjectId = projectId;
+    const p = state.project;
+    return {
+      opened: `scratch:${projectId}`,
+      sprites: p.sprites.map((s) => s.name),
+      variables: p.stage.variableNames,
+      lists: p.stage.listNames,
+      broadcasts: p.stage.broadcastNames,
+      assets: p.assets.size,
+      meta: p.meta,
+    };
+  },
+);
+
+tool(
+  'push_to_scratch',
+  {
+    title: 'Save edits to the Scratch project',
+    description:
+      'Save the open project back to scratch.mit.edu, overwriting the online ' +
+      "project's contents (uploads its costumes/sounds, then writes project.json). " +
+      'Requires login and ownership of the project. This edits the live project, ' +
+      'so it always asks the user to confirm first (set `confirm: true` only ' +
+      'after the user has agreed).',
+    inputSchema: {
+      projectId: z
+        .union([z.number(), z.string()])
+        .optional()
+        .describe('Target project id. Defaults to the opened Scratch project.'),
+      confirm: z
+        .boolean()
+        .optional()
+        .describe(
+          'Set true only after the user confirmed (used if the client cannot prompt).',
+        ),
+    },
+  },
+  async ({ projectId, confirm }) => {
+    const session = loggedInSession();
+    const id = resolveProjectId(projectId);
+    const p = openProject();
+    await requireConfirmation(
+      `Save your edits to Scratch project ${id}? This overwrites the online project.`,
+      confirm,
+    );
+    await session.projects.save(id, p);
+    return { saved: `scratch:${id}`, assets: p.assets.size };
+  },
+);
+
+tool(
+  'share_project',
+  {
+    title: 'Publish (share) the Scratch project',
+    description:
+      'Publish a project on scratch.mit.edu so it becomes publicly visible ' +
+      '(PUT /proxy/projects/<id>/share). Requires login and ownership. ' +
+      'Publishing is public and outward-facing, so it always asks the user to ' +
+      'confirm first (set `confirm: true` only after the user has agreed).',
+    inputSchema: {
+      projectId: z
+        .union([z.number(), z.string()])
+        .optional()
+        .describe(
+          'Project id to share. Defaults to the opened Scratch project.',
+        ),
+      confirm: z
+        .boolean()
+        .optional()
+        .describe(
+          'Set true only after the user confirmed (used if the client cannot prompt).',
+        ),
+    },
+  },
+  async ({ projectId, confirm }) => {
+    const session = loggedInSession();
+    const id = resolveProjectId(projectId);
+    await requireConfirmation(
+      `Publish (share) Scratch project ${id} so it is publicly visible?`,
+      confirm,
+    );
+    await session.projects.share(id);
+    return { shared: `scratch:${id}` };
   },
 );
 

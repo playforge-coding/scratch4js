@@ -2,12 +2,12 @@
 /**
  * Build an `.mcpb` bundle (https://github.com/anthropics/mcpb) for scratch-mcp.
  *
- * MCPB bundles must ship a self-contained `node_modules`, but two of our
+ * MCPB bundles must ship a self-contained `node_modules`, but some of our
  * dependencies don't install from a plain consumer manifest as-is:
  *   - `scratch-vm` is a git dependency (TurboWarp's JIT fork), and
- *   - `scratch4js` is a `workspace:*` dependency.
- * So we stage a clean directory, vendor `scratch4js` as an `npm pack` tarball,
- * `npm install --omit=dev` to materialise a flat `node_modules`, then
+ *   - `scratch4js` and `s-api4js` are `workspace:*` dependencies.
+ * So we stage a clean directory, vendor the workspace packages as `npm pack`
+ * tarballs, `npm install --omit=dev` to materialise a flat `node_modules`, then
  * `mcpb pack`. The committed `manifest.json` / `icon.png` are the source of
  * truth; everything under `build/` and `dist/` is generated.
  *
@@ -27,9 +27,11 @@ import { dirname, join, resolve } from 'node:path';
 
 const pkgDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = resolve(pkgDir, '..', '..');
-const scratch4jsDir = join(repoRoot, 'packages', 'scratch4js');
 const buildDir = join(pkgDir, 'build');
 const distDir = join(pkgDir, 'dist');
+
+/** Workspace packages the bundle depends on, vendored as tarballs below. */
+const workspaceDeps = ['scratch4js', 's-api4js'];
 
 const run = (cmd, args, cwd) => {
   console.log(`$ ${cmd} ${args.join(' ')}  (in ${cwd})`);
@@ -43,18 +45,26 @@ rmSync(buildDir, { recursive: true, force: true });
 mkdirSync(join(buildDir, 'server'), { recursive: true });
 mkdirSync(distDir, { recursive: true });
 
-console.log('• Building scratch4js (the bundle needs its built dist)');
-run('pnpm', ['--filter', 'scratch4js', 'build'], repoRoot);
-
-console.log('• Vendoring scratch4js as a tarball');
-const packOut = run(
-  'npm',
-  ['pack', '--silent', '--pack-destination', buildDir],
-  scratch4jsDir,
+console.log(
+  '• Building workspace packages (the bundle needs their built dist)',
 );
-const tarball = packOut.trim().split('\n').pop().trim();
-if (!tarball.endsWith('.tgz'))
-  throw new Error(`Unexpected npm pack output: ${JSON.stringify(packOut)}`);
+for (const name of workspaceDeps)
+  run('pnpm', ['--filter', name, 'build'], repoRoot);
+
+console.log('• Vendoring workspace packages as tarballs');
+/** @type {Record<string, string>} package name → `file:` tarball spec. */
+const vendored = {};
+for (const name of workspaceDeps) {
+  const packOut = run(
+    'npm',
+    ['pack', '--silent', '--pack-destination', buildDir],
+    join(repoRoot, 'packages', name),
+  );
+  const tarball = packOut.trim().split('\n').pop().trim();
+  if (!tarball.endsWith('.tgz'))
+    throw new Error(`Unexpected npm pack output: ${JSON.stringify(packOut)}`);
+  vendored[name] = `file:${tarball}`;
+}
 
 console.log('• Copying server sources and bundle metadata');
 for (const file of readdirSync(join(pkgDir, 'src')))
@@ -72,13 +82,13 @@ writeFileSync(
 );
 
 console.log('• Writing the bundle package.json');
-// Replace the workspace dependency with the vendored tarball, and pull
+// Replace the workspace dependencies with their vendored tarballs, and pull
 // scratch-vm's peer (`@turbowarp/scratch-svg-renderer`) up to a direct
 // dependency so npm's flat install definitely materialises it — pnpm provides
 // it transitively in dev, but a plain consumer install won't unless asked.
 const deps = {
   ...pkg.dependencies,
-  scratch4js: `file:${tarball}`,
+  ...vendored,
   '@turbowarp/scratch-svg-renderer':
     pkg.dependencies['@turbowarp/scratch-svg-renderer'] ?? '^1.1.0',
 };
