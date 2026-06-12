@@ -36,6 +36,7 @@
   },
   "scripts": {
     "start": "node src/index.js",
+    "test": "node --test --test-timeout=120000 \"test/**/*.test.js\"",
     "mcpb": "node scripts/build-mcpb.mjs"
   },
   "dependencies": {
@@ -46,5 +47,8 @@
     "scratch4js": "workspace:*",
     "ws": "^8.21.0",
     "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.22.0"
   }
 }
