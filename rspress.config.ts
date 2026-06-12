@@ -1,4 +1,5 @@
 import { defineConfig } from '@rspress/core';
+import { pluginSitemap } from '@rspress/plugin-sitemap';
 
 export default defineConfig({
   root: 'docs',
@@ -29,4 +30,9 @@ export default defineConfig({
       message: 'Released under the MPL-2.0 License.',
     },
   },
+  plugins: [
+    pluginSitemap({
+      siteUrl: 'https://playforge-coding.github.io/scratch4js',
+    }),
+  ],
 });

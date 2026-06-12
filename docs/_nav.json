@@ -11,7 +11,8 @@
   },
   {
     "text": "MCP server",
-    "link": "/guide/mcp-server"
+    "link": "/mcp-server/",
+    "activeMatch": "/mcp-server/"
   },
   {
     "text": "Create extension",

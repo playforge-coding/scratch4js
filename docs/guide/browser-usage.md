@@ -74,4 +74,4 @@ outputs are always `Uint8Array`.
 ## Next steps
 
 - [API reference](/api/overview)
-- [The MCP server](/guide/mcp-server)
+- [The MCP server](/mcp-server/)

@@ -17,6 +17,13 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { startBridge } from './bridge.js';
 import { HeadlessRuntime } from './runtime.js';
+import { applyPatch, getPointer } from './jsonpatch.js';
+import {
+  listBlocks,
+  getBlockSchema,
+  validateBlocks,
+  BUILTIN_EXTENSION_IDS,
+} from './blocks.js';
 
 /**
  * Headless VM for running and testing the open project. It loads a fresh copy
@@ -275,6 +282,228 @@ const spriteStageExtras = (s) => ({
   videoTransparency: s.videoTransparency,
   broadcasts: s.broadcastNames,
 });
+
+// --- Raw JSON editing (diff/patch) ------------------------------------------
+
+/**
+ * A compact digest of a target's raw JSON, returned after a patch so the agent
+ * can confirm the shape without echoing the (often huge) `blocks` map.
+ */
+const targetDigest = (json) => ({
+  name: json.name,
+  isStage: Boolean(json.isStage),
+  costumes: (json.costumes ?? []).map((c) => c.name),
+  sounds: (json.sounds ?? []).map((s) => s.name),
+  variables: Object.values(json.variables ?? {}).map(([n]) => n),
+  lists: Object.values(json.lists ?? {}).map(([n]) => n),
+  blocks: Object.keys(json.blocks ?? {}).length,
+});
+
+tool(
+  'get_target_json',
+  {
+    title: 'Get raw target JSON',
+    description:
+      "A target's complete raw project.json entry — `blocks` (scripts), " +
+      'costumes, sounds, variables, lists and properties — exactly as stored. ' +
+      'Read this first to author a `patch_target` edit, since the patch paths ' +
+      'are JSON Pointers into this object. Pass `pointer` to fetch just a subtree ' +
+      '(e.g. "/blocks" or "/blocks/abc123") and keep the response small.',
+    inputSchema: {
+      name: z.string().describe('Sprite name, or "Stage".'),
+      pointer: z
+        .string()
+        .optional()
+        .describe(
+          'Optional JSON Pointer (RFC 6901) to a subtree, e.g. "/blocks". ' +
+            'Omit or pass "" for the whole target.',
+        ),
+    },
+  },
+  ({ name, pointer }) => {
+    const { json } = target(name);
+    return pointer ? getPointer(json, pointer) : json;
+  },
+);
+
+tool(
+  'list_blocks',
+  {
+    title: 'List block types',
+    description:
+      'The catalog of standard Scratch block opcodes you can use in a ' +
+      "target's `blocks` map — each with its category, shape (hat / stack / " +
+      'c-block / cap / reporter / boolean) and the names of its inputs and ' +
+      'fields. Use this to discover opcodes, then `get_block_schema` for how to ' +
+      'fill one in. With no `category`, lists core blocks; pass a core category ' +
+      '(motion, looks, sound, event, control, sensing, operator, data, ' +
+      'procedures) or a built-in extension id (pen, music, videoSensing, ' +
+      'text2speech, translate, makeymakey, microbit, ev3, boost, wedo2, gdxfor) ' +
+      'to filter.',
+    inputSchema: {
+      category: z
+        .string()
+        .optional()
+        .describe('A core category or a built-in extension id.'),
+    },
+  },
+  ({ category }) => listBlocks(category),
+);
+
+tool(
+  'get_block_schema',
+  {
+    title: 'Get block schema',
+    description:
+      'The full schema for one block opcode: its shape, every input (with the ' +
+      'sb3 shadow encoding to use, e.g. a text input is `[1, [10, "hi"]]`), ' +
+      'every field (with enumerated dropdown `options` where applicable), and a ' +
+      'ready-to-adapt example block JSON. Read this before writing a block with ' +
+      '`patch_target`. In the example, `<…>` placeholders (block ids, variable ' +
+      'ids) must be replaced with real ones; menu inputs also need a matching ' +
+      'shadow block (opcode `menuOpcode`, a field named `menuField`, ' +
+      '`shadow: true`). Dynamic menu `options` (sprites, sounds, costumes, …) ' +
+      'are filled from the open project; pass `target` to enumerate that ' +
+      "sprite's own costumes and sounds.",
+    inputSchema: {
+      opcode: z
+        .string()
+        .describe('A block opcode, e.g. "looks_say" or "control_if".'),
+      target: z
+        .string()
+        .optional()
+        .describe(
+          'Sprite name (or "Stage") whose costumes/sounds should populate ' +
+            'dynamic menus.',
+        ),
+    },
+  },
+  ({ opcode, target: targetName }) => {
+    const context = {};
+    if (state.project) {
+      const p = state.project;
+      context.sprites = p.sprites.map((s) => s.name);
+      context.targets = ['Stage', ...context.sprites];
+      context.backdrops = p.stage.costumes.map((c) => c.name);
+      context.broadcasts = p.stage.broadcastNames;
+      const t = targetName ? p.target(targetName) : undefined;
+      if (t) {
+        context.costumes = t.costumes.map((c) => c.name);
+        context.sounds = t.sounds.map((s) => s.name);
+      }
+    }
+    return getBlockSchema(opcode, context);
+  },
+);
+
+tool(
+  'enable_extension',
+  {
+    title: 'Enable an extension',
+    description:
+      'Register an extension on the project so its blocks load and show in the ' +
+      'palette — required before using any `<id>_…` extension block. For a ' +
+      'built-in extension pass just its `id` (pen, music, videoSensing, ' +
+      'text2speech, translate, makeymakey, microbit, ev3, boost, wedo2, ' +
+      'gdxfor). For a custom/third-party (TurboWarp) extension, also pass the ' +
+      "loader `url` so the editor can fetch it. Adds the id to the project's " +
+      '`extensions` and, with a url, records it in `extensionURLs`.',
+    inputSchema: {
+      id: z
+        .string()
+        .describe('The extension id, e.g. "pen" or a custom extension id.'),
+      url: z
+        .string()
+        .optional()
+        .describe('Loader URL for a custom/third-party extension.'),
+    },
+  },
+  ({ id, url }) => {
+    const p = openProject();
+    if (!Array.isArray(p.json.extensions)) p.json.extensions = [];
+    const added = !p.json.extensions.includes(id);
+    if (added) p.json.extensions.push(id);
+    if (url)
+      p.json.extensionURLs = { ...(p.json.extensionURLs ?? {}), [id]: url };
+    const builtin = BUILTIN_EXTENSION_IDS.has(id);
+    return {
+      enabled: id,
+      added,
+      builtin,
+      extensions: p.json.extensions,
+      ...(!builtin && !url
+        ? {
+            note: `"${id}" is not a built-in extension; pass \`url\` so the editor can load it.`,
+          }
+        : {}),
+    };
+  },
+);
+
+tool(
+  'patch_target',
+  {
+    title: 'Patch target JSON',
+    description:
+      "Apply an RFC 6902 JSON Patch to a target's raw JSON — the way to edit a " +
+      "sprite's scripts (`blocks`) or any field a higher-level tool does not " +
+      'cover, on a sprite you just made or an existing one. Paths are JSON ' +
+      'Pointers into the object returned by `get_target_json`; read that first. ' +
+      'To write `blocks`, discover opcodes with `list_blocks` and get the exact ' +
+      'input/field shapes from `get_block_schema` — the result reports advisory ' +
+      '`warnings` for unknown opcodes or inputs. ' +
+      'The patch is applied atomically: if any operation fails the target is left ' +
+      'unchanged. Notes: patching the `costumes`/`sounds` arrays does not touch ' +
+      'stored asset bytes (use `add_costume`/`remove_costume` for those), and you ' +
+      'are responsible for keeping `blocks` internally consistent (ids, ' +
+      '`next`/`parent` links).',
+    inputSchema: {
+      name: z.string().describe('Sprite name, or "Stage".'),
+      patch: z
+        .array(
+          z
+            .object({
+              op: z.enum(['add', 'remove', 'replace', 'move', 'copy', 'test']),
+              path: z.string().describe('JSON Pointer target of the op.'),
+              from: z
+                .string()
+                .optional()
+                .describe('Source pointer for `move`/`copy`.'),
+              value: z
+                .any()
+                .optional()
+                .describe('Value for `add`/`replace`/`test`.'),
+            })
+            .passthrough(),
+        )
+        .describe('A JSON Patch document (array of operations).'),
+    },
+  },
+  ({ name, patch }) => {
+    const t = target(name);
+    const patched = applyPatch(t.json, patch);
+    if (!patched || typeof patched !== 'object' || Array.isArray(patched))
+      throw new Error('Patch must leave the target as a JSON object.');
+    if (Boolean(patched.isStage) !== t.isStage)
+      throw new Error(
+        'A patch may not change a target between stage and sprite.',
+      );
+    // Commit by replacing the entry in place so all references stay valid.
+    const targets = openProject().json.targets;
+    targets[targets.indexOf(t.json)] = patched;
+    // Advisory only: surface likely-wrong opcodes/inputs without rejecting the
+    // patch (custom/third-party extension blocks are intentionally not flagged).
+    const warnings = validateBlocks(patched.blocks, {
+      enabledExtensions: openProject().extensions,
+    });
+    return {
+      patched: name,
+      ops: patch.length,
+      target: targetDigest(patched),
+      ...(warnings.length ? { warnings } : {}),
+    };
+  },
+);
 
 // --- Sprites ----------------------------------------------------------------
 

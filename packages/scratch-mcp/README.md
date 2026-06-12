@@ -63,6 +63,44 @@ is stamped from `package.json` at build time).
 
 - `list_sprites` — every sprite with position/size/media.
 - `get_target { name }` — full details for a sprite or `"Stage"`.
+- `get_target_json { name, pointer? }` — the target's raw `project.json` entry
+  (blocks, costumes, sounds, …), or a subtree at a JSON Pointer. Read this before
+  authoring a `patch_target`.
+
+**Block reference** (so the agent knows which blocks exist and how to fill them)
+
+- `list_blocks { category? }` — the catalog of standard opcodes, each with its
+  category, shape (hat / stack / c-block / cap / reporter / boolean) and the
+  names of its inputs and fields. Generated at startup from the installed
+  `scratch-vm`, so it stays in sync.
+- `get_block_schema { opcode, target? }` — full schema for one opcode: every
+  input with its sb3 shadow encoding (e.g. a text input is `[1, [10, "hi"]]`),
+  every field with enumerated dropdown `options`, and a ready-to-adapt example
+  block JSON. Dynamic menu options (sprites, sounds, costumes, broadcasts, …) are
+  filled from the open project; pass `target` to enumerate that sprite's own
+  costumes and sounds. Covers built-in **extension** blocks too (`pen_*`,
+  `music_*`, `microbit_*`, …), generated from each extension's `getInfo()`.
+
+**Extensions**
+
+- `enable_extension { id, url? }` — register an extension so its blocks load and
+  show in the palette (required before using any `<id>_…` block). Pass just `id`
+  for a built-in (pen, music, videoSensing, text2speech, translate, makeymakey,
+  microbit, ev3, boost, wedo2, gdxfor); add `url` for a custom/third-party
+  (TurboWarp) extension. `list_blocks { category: "<id>" }` and `get_block_schema`
+  describe built-in extension blocks; `patch_target` warns when a block uses an
+  extension that isn't enabled. Custom extensions are opaque — mirror an existing
+  block via `get_target_json`.
+
+**Editing raw JSON (diff/patch)**
+
+- `patch_target { name, patch }` — apply an [RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902)
+  JSON Patch to a target's raw JSON. This is how you edit a sprite's scripts
+  (`blocks`) or any field the higher-level tools don't cover — on a sprite you
+  just created or an existing one. Paths are JSON Pointers into `get_target_json`;
+  the patch applies atomically (all-or-nothing) and the result reports advisory
+  `warnings` for unknown opcodes or inputs. Patching `costumes`/`sounds` arrays
+  doesn't move asset bytes — use `add_costume`/`remove_costume` for that.
 
 **Sprites & stage**
 

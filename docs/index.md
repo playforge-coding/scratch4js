@@ -33,6 +33,6 @@ features:
     details: Project.create() gives you a valid, empty project with a bare stage — add sprites, costumes and scripts entirely from code.
     icon: 🏗️
   - title: Drive it from an AI agent
-    details: The companion scratch-mcp server exposes the whole editing surface as MCP tools, with a live-reload bridge into TurboWarp Desktop.
+    details: The companion scratch-mcp server exposes the whole editing surface as MCP tools — including a block catalog and JSON-patch script editing — with a live-reload bridge into TurboWarp Desktop.
     icon: 🤖
 ---

@@ -79,7 +79,7 @@ ball.blocks[hatId] = {
 
 Building large scripts this way is verbose; for that workload consider editing an
 existing project as a template, or driving the editor through the
-[MCP server](/guide/mcp-server).
+[MCP server](/mcp-server/).
 
 ## Next steps
 
