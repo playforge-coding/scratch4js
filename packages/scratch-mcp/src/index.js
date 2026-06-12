@@ -147,7 +147,7 @@ const ok = (value) => ({
 });
 
 const server = new McpServer(
-  { name: 'scratch-mcp', version: '1.1.1' },
+  { name: 'scratch-mcp', version: '1.1.2' },
   { capabilities: { tools: {}, logging: {} } },
 );
 
