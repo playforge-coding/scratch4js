@@ -43,7 +43,10 @@ export default defineConfig({
     rspack: {
       plugins: [
         new rspack.CopyRspackPlugin({
-          patterns: [{ from: '../../LICENSE', to: '../' }],
+          patterns: [
+            { from: '../../LICENSE', to: '../' },
+            { from: '../../README.md', to: '../' },
+          ],
         }),
       ],
     },
