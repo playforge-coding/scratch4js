@@ -136,7 +136,10 @@ is stamped from `package.json` at build time).
 
 - `reload { path? }` — load an `.sb3` from disk in the editor.
 - `run_project` / `stop_project` — green flag / stop.
-- `screenshot` — capture a PNG of the live stage from the connected editor.
+- `screenshot { quality? }` — capture the live stage as a compressed JPEG
+  (smaller, cheaper to read; the default).
+- `screenshot_pixelperfect` — capture the live stage as a lossless PNG, for when
+  exact pixels matter.
 
 ## Running and testing a project
 
@@ -177,4 +180,6 @@ The bridge is a plain WebSocket + HTTP server. The userscript connects over
 WebSocket and answers JSON requests (`loadSB3` / `start` / `stop` / `screenshot`).
 On `loadSB3` it fetches the bytes from `GET /get.sb3?path=…` and loads them into
 the TurboWarp VM; `save_project` writes the file then sends `loadSB3`, so the
-editor always shows the latest save. `screenshot` returns the stage as a PNG.
+editor always shows the latest save. A snapshot comes back as a PNG, which the
+server serves as a compressed JPEG (`screenshot`) or unchanged
+(`screenshot_pixelperfect`).

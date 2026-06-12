@@ -7,8 +7,9 @@
  * Inspector's CLI runs one method per process, so the server's in-memory open
  * project does not survive between calls. That shapes the suite: it verifies
  * the deployed MCP *contract* — the tool surface, the project-load path, and
- * error handling — rather than multi-step editing flows (which need a single
- * persistent session and belong in a separate, client-driven test).
+ * error handling. Multi-step editing/running flows that need a single persistent
+ * session (open → load → run → assert on runtime state) live in
+ * `runtime.test.js`, which drives the server through the MCP SDK client.
  *
  * @module test/e2e.test
  */
@@ -143,6 +144,7 @@ test('tools/list exposes the full tool surface with schemas', async () => {
     'vm_state',
     'vm_input',
     'screenshot',
+    'screenshot_pixelperfect',
   ];
   for (const name of expected) {
     assert.ok(names.includes(name), `missing tool: ${name}`);
@@ -221,8 +223,14 @@ test('run_project drives the bridge even with no userscript connected', async ()
   assert.deepEqual(JSON.parse(textOf(result)), { started: 0 });
 });
 
-test('screenshot errors cleanly when no TurboWarp userscript is connected', async () => {
-  const result = await callTool('screenshot');
-  assert.equal(result.isError, true);
-  assert.match(textOf(result), /no turbowarp desktop userscript is connected/i);
+test('screenshot tools error cleanly when no TurboWarp userscript is connected', async () => {
+  for (const name of ['screenshot', 'screenshot_pixelperfect']) {
+    const result = await callTool(name);
+    assert.equal(result.isError, true, `${name} should error`);
+    assert.match(
+      textOf(result),
+      /no turbowarp desktop userscript is connected/i,
+      `${name} message`,
+    );
+  }
 });

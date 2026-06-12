@@ -87,4 +87,7 @@ workflow see [Editing scripts](/mcp-server/editing-scripts); for the VM tools se
 
 - `reload { path? }` — load an `.sb3` from disk in the editor.
 - `run_project` / `stop_project` — green flag / stop.
-- `screenshot` — capture a PNG of the live stage from the connected editor.
+- `screenshot { quality? }` — capture the live stage as a compressed **JPEG**
+  (smaller, cheaper to read; default for eyeballing the stage).
+- `screenshot_pixelperfect` — capture the live stage as a lossless **PNG**, for
+  when exact pixels matter (crisp edges, precise colours, thin lines).
