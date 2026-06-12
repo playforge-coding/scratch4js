@@ -14,6 +14,11 @@
     "link": "/guide/mcp-server"
   },
   {
+    "text": "Create extension",
+    "link": "/create-tw-extension/",
+    "activeMatch": "/create-tw-extension/"
+  },
+  {
     "text": "Extension bundler",
     "items": [
       {
