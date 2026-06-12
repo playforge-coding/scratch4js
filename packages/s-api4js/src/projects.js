@@ -224,7 +224,7 @@ export class Projects {
     const ext = md5ext.split('.').pop()?.toLowerCase() ?? '';
     const contentType = ASSET_MIME[ext] ?? 'application/octet-stream';
     return this.session.authedJson(
-      `${this.session.assetsHost}/${md5ext}/`,
+      `${this.session.assetsHost}/${md5ext}`,
       { method: 'POST', body: toBytes(bytes) },
       { 'Content-Type': contentType },
     );
