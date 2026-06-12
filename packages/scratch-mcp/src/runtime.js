@@ -87,7 +87,12 @@ export class HeadlessRuntime {
   constructor() {
     /** @type {import('scratch-vm') | null} */
     this.vm = null;
-    /** Latest say/think bubble per target id. @type {Map<string, object>} */
+    /**
+     * Last say/think bubble seen per target id, used only to de-duplicate the
+     * event timeline (so a `say` in a loop logs one event). The snapshot's
+     * `bubbles` are read live from each target instead (see {@link bubbleOf}).
+     * @type {Map<string, object>}
+     */
     this.bubbles = new Map();
     /** Text of the pending `ask and wait` question, or null. @type {string|null} */
     this.question = null;
@@ -207,8 +212,9 @@ export class HeadlessRuntime {
 
     // SAY fires for both `say` and `think`; empty text clears the bubble. We
     // only emit a log event when the bubble actually changes, so a `say` inside
-    // a loop doesn't spam one event per frame.
-    vm.on('SAY', (target, type, text) => {
+    // a loop doesn't spam one event per frame. It is emitted on the *runtime*,
+    // not the VM (the VM doesn't forward it), so listen there.
+    rt.on('SAY', (target, type, text) => {
       const id = target?.id;
       if (!id) return;
       const name = target.getName?.() ?? id;
@@ -235,8 +241,8 @@ export class HeadlessRuntime {
     });
 
     // QUESTION carries the prompt string while an `ask and wait` is pending,
-    // and null once it is answered.
-    vm.on('QUESTION', (question) => {
+    // and null once it is answered. Also emitted on the runtime, not the VM.
+    rt.on('QUESTION', (question) => {
       this.question = question == null ? null : String(question);
       if (this.question !== null)
         this._emit(
@@ -461,7 +467,7 @@ export class HeadlessRuntime {
     return {
       targets,
       monitors: this._monitors(),
-      bubbles: [...this.bubbles.values()],
+      bubbles: rt.targets.map((t) => bubbleOf(t)).filter(Boolean),
       question: this.question,
       threadsRunning: rt.threads.length,
       errors: this.errors.slice(),
@@ -506,3 +512,24 @@ export class HeadlessRuntime {
 
 /** Round to one decimal place, leaving non-numbers untouched. */
 const round = (n) => (typeof n === 'number' ? Math.round(n * 10) / 10 : n);
+
+/**
+ * The say/think bubble currently showing for a target, read from the live looks
+ * state rather than accumulated SAY events — authoritative even when a bubble is
+ * cleared by a path that doesn't re-emit SAY (e.g. `say … for secs` timing out
+ * under the JIT compiler). Returns null when nothing is showing. The key is
+ * scratch-vm's `Scratch3LooksBlocks.STATE_KEY` (`'Scratch.looks'`).
+ *
+ * @param {object} target - A scratch-vm `RenderedTarget`.
+ * @returns {{ sprite: string, type: string, text: string } | null}
+ */
+const bubbleOf = (target) => {
+  const state = target.getCustomState?.('Scratch.looks');
+  if (!state || state.text === '' || state.text == null) return null;
+  if (!target.isStage && !target.visible) return null; // hidden sprites show none
+  return {
+    sprite: target.getName?.() ?? target.id,
+    type: state.type,
+    text: String(state.text),
+  };
+};
