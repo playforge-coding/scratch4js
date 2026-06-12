@@ -9,6 +9,11 @@ export default [
   },
   js.configs.recommended,
   {
+    // The create-tw-extension CLI's Ink UI is written as JSX (built by Rsbuild).
+    files: ['**/*.jsx'],
+    languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+  },
+  {
     // TurboWarp extension sources reference `Scratch`, a global injected by the
     // host page (the plugin's IIFE wrapper binds it as a parameter).
     files: [

@@ -11,6 +11,10 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "skipLibCheck": true,
+    // `@types/*` packages hoisted into the workspace. A broken/partial one
+    // (e.g. `@types/trusted-types`, pulled in transitively by a devDependency)
+    // otherwise fails the build with TS2688.
+    "types": [],
     "strict": true,
     "rootDir": "src"
   },
