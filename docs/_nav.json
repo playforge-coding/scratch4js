@@ -25,6 +25,11 @@
     "activeMatch": "/create-tw-extension/"
   },
   {
+    "text": "Web editor",
+    "link": "/web-editor/",
+    "activeMatch": "/web-editor/"
+  },
+  {
     "text": "Extension bundler",
     "items": [
       {

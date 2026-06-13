@@ -1,0 +1,53 @@
+{
+  "name": "tw-extension-maker",
+  "description": "In-browser IDE for building TurboWarp/Scratch extensions: edit a multi-file project in Monaco, bundle it with Rsbuild + tw-plugin-webpack inside a WebContainer, and live-preview it in TurboWarp.",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "license": "MPL-2.0",
+  "author": "playforge-coding",
+  "homepage": "https://github.com/playforge-coding/scratch4js/tree/main/packages/tw-extension-maker#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/playforge-coding/scratch4js.git",
+    "directory": "packages/tw-extension-maker"
+  },
+  "bugs": {
+    "url": "https://github.com/playforge-coding/scratch4js/issues"
+  },
+  "keywords": [
+    "turbowarp",
+    "scratch",
+    "extension",
+    "ide",
+    "webcontainer",
+    "monaco",
+    "playground"
+  ],
+  "scripts": {
+    "dev": "rsbuild dev",
+    "build": "rsbuild build",
+    "preview": "rsbuild preview"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "^1.5.0",
+    "@rsbuild/plugin-node-polyfill": "^1.3.0",
+    "@rsbuild/plugin-react": "^1.3.0",
+    "@tailwindcss/postcss": "^4.1.0",
+    "tailwindcss": "^4.1.0"
+  },
+  "dependencies": {
+    "@turbowarp/scratch-l10n": "^3.1001.0-202401241456-994097a5",
+    "@turbowarp/scratch-storage": "^2.0.0",
+    "@turbowarp/scratch-svg-renderer": "^1.1.0",
+    "create-tw-extension": "workspace:*",
+    "lucide-react": "^0.474.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "scratch-audio": "github:TurboWarp/scratch-audio#aba00cd02e36d95407effafa03f3678e4c669b30",
+    "scratch-blocks": "github:TurboWarp/scratch-blocks#d3d1c2c89c0c63d3c16434ba063accd881d487c2",
+    "scratch-render": "github:TurboWarp/scratch-render#a67f7c9c07d459582c227d4fd3fae8f59d8fc9ce",
+    "scratch-vm": "github:TurboWarp/scratch-vm#43f13efd1883eeef8f82616faf69380ff75ab068",
+    "web-editor": "workspace:*"
+  }
+}

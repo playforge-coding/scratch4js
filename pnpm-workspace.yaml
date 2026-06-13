@@ -3,6 +3,10 @@ packages:
 blockExoticSubdeps: false
 allowBuilds:
   core-js: false
+  scratch-blocks: true
+  scratch-vm: true
+  scratch-render: true
+  scratch-audio: true
 minimumReleaseAgeExclude:
   - '@img/sharp-darwin-arm64@0.35.1'
   - '@img/sharp-darwin-x64@0.35.1'

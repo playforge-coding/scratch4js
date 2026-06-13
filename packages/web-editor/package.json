@@ -1,0 +1,58 @@
+{
+  "name": "web-editor",
+  "description": "Reusable in-browser IDE building blocks: a resizable split-pane layout, Monaco editor, xterm terminal bound to a WebContainer, a Seti-iconed file tree, and Radix UI primitives. Framework for tools like tw-extension-maker.",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MPL-2.0",
+  "author": "playforge-coding",
+  "homepage": "https://github.com/playforge-coding/scratch4js/tree/main/packages/web-editor#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/playforge-coding/scratch4js.git",
+    "directory": "packages/web-editor"
+  },
+  "keywords": [
+    "ide",
+    "monaco",
+    "webcontainer",
+    "xterm",
+    "code-editor",
+    "react",
+    "seti-icons"
+  ],
+  "exports": {
+    ".": "./dist/index.js",
+    "./styles.css": "./src/styles.css"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "files": [
+    "dist",
+    "icons",
+    "src/styles.css"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rslib build",
+    "dev": "rslib build --watch"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "@webcontainer/api": "^1.6.0",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "lucide-react": "^0.474.0",
+    "monaco-editor": "^0.52.0",
+    "radix-ui": "^1.1.3"
+  },
+  "devDependencies": {
+    "@rsbuild/plugin-react": "^1.3.0",
+    "@rslib/core": "^0.22.0"
+  }
+}

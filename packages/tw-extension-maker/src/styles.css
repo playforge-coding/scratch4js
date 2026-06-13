@@ -1,0 +1,6 @@
+/* The base theme + Tailwind setup lives in web-editor; this app just pulls it in.
+   web-editor's stylesheet declares `@import 'tailwindcss'`, the `@theme` tokens,
+   and `@source` for its own components. We add `@source` for this app's own
+   source so its utility classes are generated too. */
+@import 'web-editor/styles.css';
+@source './';

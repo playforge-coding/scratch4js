@@ -23,7 +23,23 @@ export default [
     languageOptions: { globals: { Scratch: 'readonly' } },
   },
   {
-    // Build output and sample projects are not ours to lint.
-    ignores: ['**/dist/**', '**/doc_build/**', '**/example_project/**'],
+    // The vendored scratch-gui (reference only) and scratch glue files use
+    // upstream's lint config and a different style; don't lint them here.
+    files: [
+      '**/scratch/make-toolbox-xml.js',
+      '**/scratch/vm-blocks.js',
+      '**/scratch/define-dynamic-block.js',
+    ],
+    rules: { 'no-unused-vars': 'off' },
+  },
+  {
+    // Build output, sample projects, and vendored upstreams are not ours to lint.
+    ignores: [
+      '**/dist/**',
+      '**/doc_build/**',
+      '**/example_project/**',
+      'scratch-gui/**',
+      '**/scratch-stubs/**',
+    ],
   },
 ];
