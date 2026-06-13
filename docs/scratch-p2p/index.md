@@ -73,6 +73,7 @@ from npm and bundled in. Build it, then load the `dist/` folder unpacked.
 ```bash
 pnpm --filter scratch-p2p build   # one-off build  → packages/scratch-p2p/dist
 pnpm --filter scratch-p2p dev     # rebuild on change (watch mode)
+pnpm --filter scratch-p2p xpi     # build + package → artifacts/scratch-p2p.xpi
 ```
 
 **Chrome / Edge**
@@ -86,6 +87,18 @@ pnpm --filter scratch-p2p dev     # rebuild on change (watch mode)
 2. **Load Temporary Add-on…** → pick `packages/scratch-p2p/dist/manifest.json`.
 
 Requires Chrome 111+ / Firefox 128+.
+
+:::warning Installing from an `.xpi`
+An `.xpi` is a zip with **`manifest.json` at its root** — if you roll your own,
+zip the _contents_ of `dist/`, not the `dist/` folder, or Firefox reports the
+add-on as **corrupt**. The `xpi` script does this for you.
+
+Release/stable Firefox also only installs **signed** add-ons, so an unsigned
+`.xpi` won't install permanently there. Use **Load Temporary Add-on** (above),
+or **Developer Edition / Nightly / ESR** with `xpinstall.signatures.required`
+set to `false`, or sign it via
+[addons.mozilla.org](https://addons.mozilla.org/developers/).
+:::
 
 ## Use
 

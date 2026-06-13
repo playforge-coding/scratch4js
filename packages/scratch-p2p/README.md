@@ -1,6 +1,6 @@
 # scratch-p2p
 
-A **buildless** browser extension (Chrome **and** Firefox) that adds real-time,
+A browser extension (Chrome **and** Firefox) that adds real-time,
 **fully peer-to-peer** collaboration to the **Scratch** and **TurboWarp**
 editors. Two or more people can edit the same project together — blocks,
 sprites, costumes and sounds stay in sync — with **no backend server**: project
@@ -45,6 +45,7 @@ emitted to `dist/`.
 ```bash
 pnpm --filter scratch-p2p build   # one-off build  → dist/
 pnpm --filter scratch-p2p dev     # rebuild on change (watch mode)
+pnpm --filter scratch-p2p xpi     # build + package → artifacts/scratch-p2p.xpi
 ```
 
 ## Install (unpacked)
@@ -62,6 +63,23 @@ Build first (see above), then load `packages/scratch-p2p/dist`.
 2. **Load Temporary Add-on…** → pick `packages/scratch-p2p/dist/manifest.json`.
 
 Requires Chrome 111+ / Firefox 128+.
+
+### Installing from an `.xpi`
+
+`pnpm --filter scratch-p2p xpi` produces `artifacts/scratch-p2p.xpi`. An `.xpi`
+is just a zip with **`manifest.json` at its root** — if you make your own, zip
+the _contents_ of `dist/`, not the `dist/` folder (a nested
+`dist/manifest.json` is what makes Firefox say the add-on is **corrupt**).
+
+Note that **release/stable Firefox only installs _signed_ add-ons**, so an
+unsigned `.xpi` won't install permanently there. Your options:
+
+- **Easiest (dev):** skip the `.xpi` and use **Load Temporary Add-on** above.
+- Use **Firefox Developer Edition / Nightly / ESR** and set
+  `xpinstall.signatures.required` to `false` in `about:config`, then open the
+  `.xpi`.
+- **Sign it** via [addons.mozilla.org](https://addons.mozilla.org/developers/)
+  for a distributable signed `.xpi`.
 
 ## Use
 

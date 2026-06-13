@@ -17,7 +17,8 @@
   ],
   "scripts": {
     "build": "rsbuild build",
-    "dev": "rsbuild build --watch"
+    "dev": "rsbuild build --watch",
+    "xpi": "node scripts/make-xpi.mjs"
   },
   "dependencies": {
     "peerjs": "^1.5.4"
