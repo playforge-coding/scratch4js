@@ -1,7 +1,7 @@
 {
   "name": "s-api4js",
   "description": "A class-based wrapper for the Scratch API: public data and login (edit project .sb3).",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "type": "module",
   "license": "MPL-2.0",
   "author": "playforge-coding",

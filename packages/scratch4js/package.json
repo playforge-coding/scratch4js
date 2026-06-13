@@ -1,7 +1,7 @@
 {
   "name": "scratch4js",
   "description": "The SB3 format for JavaScript.",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "type": "module",
   "license": "MPL-2.0",
   "author": "playforge-coding",

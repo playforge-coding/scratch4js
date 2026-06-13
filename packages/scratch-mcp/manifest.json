@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "scratch-mcp",
   "display_name": "Scratch (scratch4js)",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Edit, run and test Scratch .sb3 projects from an AI agent.",
   "long_description": "An MCP server, built on scratch4js, that lets an agent edit Scratch `.sb3` projects (sprites, scripts data, costumes, sounds, variables, lists) and **run and test** them in a headless TurboWarp VM — reading back structured state (variables, sprite positions, say/think bubbles, monitors) and an event timeline, with no browser needed. It can also live-reload edits and capture screenshots in TurboWarp Desktop when the companion userscript is installed.",
   "author": {
