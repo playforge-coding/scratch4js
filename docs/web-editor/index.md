@@ -23,8 +23,8 @@ It gives you:
   file-type icons.
 - **A WebContainer build engine** (`WebContainerEngine`) — boot, `npm install`,
   run a build, read the output back out, stream all of it to the terminal.
-- **Radix UI primitives** (`Button`, `Tooltip`, `Dialog`-based dialogs, `Switch`,
-  …) themed with a dark Tailwind palette.
+- **Radix UI primitives** (`Button`, `IconButton`, `Tooltip`, `Switch`,
+  `StatusBadge`, …) themed with a dark Tailwind palette.
 
 ## Install
 

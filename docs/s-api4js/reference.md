@@ -92,17 +92,17 @@ an endpoint that doesn't have a dedicated method yet.
 
 **Writes** (require login + ownership):
 
-| Method                                                     | Endpoint                                |
-| ---------------------------------------------------------- | --------------------------------------- |
-| `setJson(id, json)`                                        | `PUT projects.scratch.mit.edu/<id>`     |
-| `uploadAsset(md5ext, bytes)`                               | `POST assets.scratch.mit.edu/<md5ext>/` |
-| `save(id, project)`                                        | upload all assets, then `setJson`       |
-| `setMetadata(id, { title?, instructions?, description? })` | `PUT /projects/<id>`                    |
-| `setTitle(id, title)`                                      | shortcut for `setMetadata`              |
-| `setInstructions(id, instructions)`                        | shortcut for `setMetadata`              |
-| `setDescription(id, description)`                          | shortcut for `setMetadata`              |
-| `share(id)`                                                | `PUT /proxy/projects/<id>/share`        |
-| `unshare(id)`                                              | `PUT /proxy/projects/<id>/unshare`      |
+| Method                                                     | Endpoint                               |
+| ---------------------------------------------------------- | -------------------------------------- |
+| `setJson(id, json)`                                        | `PUT projects.scratch.mit.edu/<id>`    |
+| `uploadAsset(md5ext, bytes)`                               | `POST assets.scratch.mit.edu/<md5ext>` |
+| `save(id, project)`                                        | upload all assets, then `setJson`      |
+| `setMetadata(id, { title?, instructions?, description? })` | `PUT /projects/<id>`                   |
+| `setTitle(id, title)`                                      | shortcut for `setMetadata`             |
+| `setInstructions(id, instructions)`                        | shortcut for `setMetadata`             |
+| `setDescription(id, description)`                          | shortcut for `setMetadata`             |
+| `share(id)`                                                | `PUT /proxy/projects/<id>/share`       |
+| `unshare(id)`                                              | `PUT /proxy/projects/<id>/unshare`     |
 
 `save()` accepts a `scratch4js` `Project` or any `{ json, assets }`, where
 `assets` is a `Map`/object of `md5ext → Uint8Array` or an array of

@@ -11,5 +11,5 @@ On `loadSB3` it fetches the bytes from `GET /get.sb3?path=…` and loads them in
 the TurboWarp VM; `save_project` writes the file then sends `loadSB3`, so the
 editor always shows the latest save. For a snapshot the userscript calls the
 renderer's `requestSnapshot` and returns a PNG data URL; the server then serves
-that as a compressed JPEG (`screenshot`, via [sharp](https://sharp.pixelplumbing.com))
-or passes the lossless PNG through unchanged (`screenshot_pixelperfect`).
+the lossless PNG through unchanged (`screenshot`) or re-encodes it as a compressed
+JPEG (`screenshot_jpeg`, via [sharp](https://sharp.pixelplumbing.com)).

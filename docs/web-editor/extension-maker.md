@@ -31,7 +31,7 @@ It's hosted from this same site at
 
 - **A dashboard** to create and manage extensions. Pick a **bundler** (Rsbuild,
   Rspack, webpack, Rollup, Rolldown, or Vite) and a **package manager** (npm,
-  pnpm, yarn, bun) per project.
+  pnpm, or yarn) per project.
 - **A Monaco editor** over a real multi-file project — split your extension
   across as many files as you like.
 - **A real WebContainer** that runs `npm install` and the bundler (the same

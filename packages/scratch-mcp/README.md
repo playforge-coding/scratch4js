@@ -153,10 +153,10 @@ is stamped from `package.json` at build time).
 
 - `reload { path? }` — load an `.sb3` from disk in the editor.
 - `run_project` / `stop_project` — green flag / stop.
-- `screenshot { quality? }` — capture the live stage as a compressed JPEG
-  (smaller, cheaper to read; the default).
-- `screenshot_pixelperfect` — capture the live stage as a lossless PNG, for when
-  exact pixels matter.
+- `screenshot` — capture the live stage as a lossless PNG, for when exact pixels
+  matter. Takes no parameters.
+- `screenshot_jpeg { quality? }` — the same capture re-encoded as a compressed
+  JPEG (smaller, cheaper to read; `quality` 1–100, default 80).
 
 ## Running and testing a project
 
@@ -198,5 +198,5 @@ WebSocket and answers JSON requests (`loadSB3` / `start` / `stop` / `screenshot`
 On `loadSB3` it fetches the bytes from `GET /get.sb3?path=…` and loads them into
 the TurboWarp VM; `save_project` writes the file then sends `loadSB3`, so the
 editor always shows the latest save. A snapshot comes back as a PNG, which the
-server serves as a compressed JPEG (`screenshot`) or unchanged
-(`screenshot_pixelperfect`).
+server passes through unchanged (`screenshot`) or re-encodes as a compressed
+JPEG (`screenshot_jpeg`).

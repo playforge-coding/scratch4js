@@ -30,7 +30,7 @@ scaffolds, installs, and prints the next steps:
 ```text
 create-tw-extension  scaffold a TurboWarp extension
 
-? Project name: my-extension
+? Project name: my-tw-extension
 ? Which bundler? › Rspack — Rust-powered, webpack-compatible. Very fast.
 ? Install @turbowarp/types for editor autocomplete? › Yes
 ? Package manager?  (detected pnpm) › pnpm

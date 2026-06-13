@@ -7,7 +7,7 @@ export default defineConfig({
   base: '/scratch4js/',
   title: 'scratch4js',
   description:
-    'Read and edit Scratch .sb3 projects with a small, declarative JavaScript API.',
+    'A JavaScript toolkit for Scratch & TurboWarp: read and edit .sb3 projects, talk to the Scratch website, drive it from an AI agent, and build & bundle TurboWarp extensions.',
   lang: 'en',
   llms: true,
   icon: '/favicon.svg',
