@@ -1,7 +1,7 @@
 /*
  * userstyle.css — TurboWarp Desktop userstyle for both features:
  *   #scratch-mcp-status  — scratch-mcp live-reload badge
- *   #scratch-p2p-panel   — collaboration control panel
+ *   #scratch-collab-panel   — collaboration control panel
  */
 
 /* ---- scratch-mcp live-reload badge ------------------------------------- */
@@ -47,7 +47,7 @@
 }
 
 /* ---- collaboration control panel --------------------------------------- */
-#scratch-p2p-panel {
+#scratch-collab-panel {
   position: fixed;
   bottom: 10px;
   right: 10px;
@@ -67,45 +67,45 @@
   user-select: none;
 }
 
-#scratch-p2p-panel.sp2p-collapsed {
+#scratch-collab-panel.scollab-collapsed {
   width: auto;
 }
-#scratch-p2p-panel.sp2p-collapsed .sp2p-sub,
-#scratch-p2p-panel.sp2p-collapsed .sp2p-form,
-#scratch-p2p-panel.sp2p-collapsed .sp2p-leave {
+#scratch-collab-panel.scollab-collapsed .scollab-sub,
+#scratch-collab-panel.scollab-collapsed .scollab-form,
+#scratch-collab-panel.scollab-collapsed .scollab-leave {
   display: none;
 }
 
-#scratch-p2p-panel .sp2p-head {
+#scratch-collab-panel .scollab-head {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-#scratch-p2p-panel .sp2p-dot {
+#scratch-collab-panel .scollab-dot {
   width: 9px;
   height: 9px;
   border-radius: 50%;
   background: #6c7086; /* idle */
   flex: none;
 }
-#scratch-p2p-panel[data-state='connecting'] .sp2p-dot {
+#scratch-collab-panel[data-state='connecting'] .scollab-dot {
   background: #f9e2af;
 }
-#scratch-p2p-panel[data-state='hosting'] .sp2p-dot,
-#scratch-p2p-panel[data-state='connected'] .sp2p-dot {
+#scratch-collab-panel[data-state='hosting'] .scollab-dot,
+#scratch-collab-panel[data-state='connected'] .scollab-dot {
   background: #a6e3a1;
 }
-#scratch-p2p-panel[data-state='error'] .sp2p-dot {
+#scratch-collab-panel[data-state='error'] .scollab-dot {
   background: #f38ba8;
 }
 
-#scratch-p2p-panel .sp2p-title {
+#scratch-collab-panel .scollab-title {
   font-weight: 600;
   flex: 1;
 }
 
-#scratch-p2p-panel .sp2p-x {
+#scratch-collab-panel .scollab-x {
   cursor: pointer;
   border: none;
   background: transparent;
@@ -115,18 +115,18 @@
   padding: 0 4px;
 }
 
-#scratch-p2p-panel .sp2p-sub {
+#scratch-collab-panel .scollab-sub {
   opacity: 0.75;
   font-size: 11px;
   word-break: break-all;
 }
 
-#scratch-p2p-panel .sp2p-form {
+#scratch-collab-panel .scollab-form {
   display: flex;
   gap: 6px;
 }
 
-#scratch-p2p-panel .sp2p-url {
+#scratch-collab-panel .scollab-url {
   flex: 1;
   min-width: 0;
   padding: 4px 6px;
@@ -137,8 +137,8 @@
   font: inherit;
 }
 
-#scratch-p2p-panel button.sp2p-connect,
-#scratch-p2p-panel button.sp2p-leave {
+#scratch-collab-panel button.scollab-connect,
+#scratch-collab-panel button.scollab-leave {
   cursor: pointer;
   border: none;
   border-radius: 5px;
@@ -148,6 +148,6 @@
   color: #11111b;
   background: #89b4fa;
 }
-#scratch-p2p-panel button.sp2p-leave {
+#scratch-collab-panel button.scollab-leave {
   background: #f38ba8;
 }

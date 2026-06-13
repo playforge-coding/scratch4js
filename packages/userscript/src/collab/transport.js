@@ -58,7 +58,7 @@ function sendRaw(obj) {
     try {
       ws.send(JSON.stringify(obj));
     } catch (e) {
-      console.error('[scratch-p2p] send failed', e);
+      console.error('[scratch-collab] send failed', e);
     }
   }
 }
@@ -71,7 +71,7 @@ function sendLocal(msg) {
   try {
     json = JSON.stringify(msg);
   } catch (e) {
-    console.error('[scratch-p2p] could not serialize message', e, msg);
+    console.error('[scratch-collab] could not serialize message', e, msg);
     return;
   }
   debug('send', msg.meta || msg.type);
@@ -101,7 +101,7 @@ async function sendProjectTo(id) {
     debug('sending project', buf.byteLength, 'bytes ->', id);
     sendRaw({ t: 'project', to: id, sb3: bufToBase64(buf) });
   } catch (e) {
-    console.error('[scratch-p2p] failed to send project', e);
+    console.error('[scratch-collab] failed to send project', e);
   }
 }
 

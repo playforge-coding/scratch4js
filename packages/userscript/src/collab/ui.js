@@ -11,32 +11,32 @@ export function createUI({ onConnect, onDisconnect, defaultUrl }) {
   function build() {
     if (root) return;
     root = document.createElement('div');
-    root.id = 'scratch-p2p-panel';
+    root.id = 'scratch-collab-panel';
     root.innerHTML =
-      '<div class="sp2p-head">' +
-      '<span class="sp2p-dot"></span>' +
-      '<span class="sp2p-title">Collaboration</span>' +
-      '<button class="sp2p-x" title="Hide">–</button>' +
+      '<div class="scollab-head">' +
+      '<span class="scollab-dot"></span>' +
+      '<span class="scollab-title">Collaboration</span>' +
+      '<button class="scollab-x" title="Hide">–</button>' +
       '</div>' +
-      '<div class="sp2p-sub"></div>' +
-      '<div class="sp2p-form">' +
-      '<input class="sp2p-url" type="text" spellcheck="false" ' +
+      '<div class="scollab-sub"></div>' +
+      '<div class="scollab-form">' +
+      '<input class="scollab-url" type="text" spellcheck="false" ' +
       'placeholder="ws://host:9070" />' +
-      '<button class="sp2p-connect">Connect</button>' +
+      '<button class="scollab-connect">Connect</button>' +
       '</div>' +
-      '<button class="sp2p-leave" hidden>Disconnect</button>';
+      '<button class="scollab-leave" hidden>Disconnect</button>';
     (document.body || document.documentElement).appendChild(root);
-    titleEl = root.querySelector('.sp2p-title');
-    subEl = root.querySelector('.sp2p-sub');
-    form = root.querySelector('.sp2p-form');
-    urlInput = root.querySelector('.sp2p-url');
-    connectBtn = root.querySelector('.sp2p-connect');
-    leaveBtn = root.querySelector('.sp2p-leave');
+    titleEl = root.querySelector('.scollab-title');
+    subEl = root.querySelector('.scollab-sub');
+    form = root.querySelector('.scollab-form');
+    urlInput = root.querySelector('.scollab-url');
+    connectBtn = root.querySelector('.scollab-connect');
+    leaveBtn = root.querySelector('.scollab-leave');
 
-    urlInput.value = localStorage.getItem('scratchP2PUrl') || defaultUrl;
+    urlInput.value = localStorage.getItem('scratchCollabUrl') || defaultUrl;
     connectBtn.addEventListener('click', () => {
       const u = urlInput.value.trim() || defaultUrl;
-      localStorage.setItem('scratchP2PUrl', u);
+      localStorage.setItem('scratchCollabUrl', u);
       onConnect(u);
     });
     urlInput.addEventListener('keydown', (e) => {
@@ -44,8 +44,10 @@ export function createUI({ onConnect, onDisconnect, defaultUrl }) {
     });
     leaveBtn.addEventListener('click', () => onDisconnect());
     root
-      .querySelector('.sp2p-x')
-      .addEventListener('click', () => root.classList.toggle('sp2p-collapsed'));
+      .querySelector('.scollab-x')
+      .addEventListener('click', () =>
+        root.classList.toggle('scollab-collapsed'),
+      );
   }
 
   function render(s) {

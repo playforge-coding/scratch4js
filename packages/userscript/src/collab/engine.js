@@ -45,9 +45,9 @@ function mutationCallback() {
   const toDelete = [];
   queryList.forEach((q) => {
     const elem = document.querySelector(q.query);
-    if (elem && !elem.__p2pSeen) {
+    if (elem && !elem.__scratchCollabSeen) {
       if (q.once) toDelete.push(q);
-      else elem.__p2pSeen = true;
+      else elem.__scratchCollabSeen = true;
       q.callback(elem);
     }
   });
@@ -68,7 +68,7 @@ function getObj(query) {
 function listenForObj(query, callback) {
   const obj = document.querySelector(query);
   if (obj) {
-    obj.__p2pSeen = true;
+    obj.__scratchCollabSeen = true;
     callback(obj);
   }
   queryList.push({ query, callback, once: false });
@@ -136,7 +136,9 @@ async function trap() {
       (n) => n.memoizedProps && n.memoizedProps.vm,
     );
     if (!vmFiber) {
-      console.error('[scratch-p2p] could not locate the scratch-vm; retrying');
+      console.error(
+        '[scratch-collab] could not locate the scratch-vm; retrying',
+      );
       setTimeout(trap, 500);
       return;
     }
@@ -151,7 +153,7 @@ async function trap() {
   listenForObj('[class^="gui_blocks-wrapper"]', () => trapScratchBlocks());
 
   // Lightweight probe so the user can check what got trapped from the console.
-  window.__scratchP2PStatus = () => ({
+  window.__scratchCollabStatus = () => ({
     vm: !!vm,
     scratchBlocks: !!ScratchBlocks,
     workspace: !!getWorkspace(),
@@ -161,7 +163,7 @@ async function trap() {
 
   engineReady = true;
   engineReadyWaiters.splice(0).forEach((r) => r());
-  console.log('[scratch-p2p] editor trapped, engine ready');
+  console.log('[scratch-collab] editor trapped, engine ready');
 }
 
 // ScratchBlocks may not exist the instant the wrapper div mounts (the blocks
@@ -190,13 +192,13 @@ function trapScratchBlocks(tries = 0) {
     if (tries < 50) setTimeout(() => trapScratchBlocks(tries + 1), 200);
     else
       console.warn(
-        '[scratch-p2p] could not find ScratchBlocks — block edits will not sync',
+        '[scratch-collab] could not find ScratchBlocks — block edits will not sync',
       );
     return;
   }
   ScratchBlocks = sb;
   if (!window.Blockly) window.Blockly = ScratchBlocks;
-  console.log('[scratch-p2p] ScratchBlocks trapped');
+  console.log('[scratch-collab] ScratchBlocks trapped');
   attachBlockListener();
 }
 
@@ -211,7 +213,7 @@ function attachBlockListener(tries = 0) {
     if (tries < 50) setTimeout(() => attachBlockListener(tries + 1), 200);
     else
       console.warn(
-        '[scratch-p2p] gave up waiting for the Blockly workspace; block edits will not sync',
+        '[scratch-collab] gave up waiting for the Blockly workspace; block edits will not sync',
       );
     return;
   }
@@ -219,7 +221,7 @@ function attachBlockListener(tries = 0) {
   ws.removeChangeListener(blockListener);
   ws.addChangeListener(blockListener);
   blockListenerAttachedTo = ws;
-  console.log('[scratch-p2p] block sync listener attached');
+  console.log('[scratch-collab] block sync listener attached');
 }
 
 // ============================================ ported sync engine ==========
@@ -228,7 +230,7 @@ function attachBlockListener(tries = 0) {
 // them, but rely on `vm`, `store`, `ScratchBlocks` being set first.
 
 // STAGE IDENTIFIER — a string no sprite should ever be named.
-const stageName = 'jHHVSbKjDsRhSWhIlYtd...___+_0)0+-p2p';
+const stageName = 'jHHVSbKjDsRhSWhIlYtd...___+_0)0+-collab';
 
 function targetToName(target) {
   return target?.isStage ? stageName : target?.sprite.name;
@@ -691,7 +693,7 @@ function installEngine() {
         vm.editingTarget.blocks.blocklyListen(vEvent);
       }
     } catch (e) {
-      console.error('[scratch-p2p] error applying block event', e);
+      console.error('[scratch-collab] error applying block event', e);
     }
 
     if (oldEditingTarget && vm.runtime.getTargetById(oldEditingTarget.id)) {
@@ -737,10 +739,11 @@ function installEngine() {
         getStringEventRep({ type: 'comment_create', commentId })
       ] = true;
     });
+    const topBlockDeleteMarks = [];
     getWorkspace()?.topBlocks_.forEach((block) => {
-      livescratchEvents[
-        getStringEventRep({ type: 'delete', blockId: block.id })
-      ] = true;
+      const rep = getStringEventRep({ type: 'delete', blockId: block.id });
+      livescratchEvents[rep] = true;
+      topBlockDeleteMarks.push(rep);
     });
     Object.keys(vm.editingTarget.blocks._blocks).forEach((blockId) => {
       livescratchEvents[getStringEventRep({ type: 'create', blockId })] = true;
@@ -788,6 +791,13 @@ function installEngine() {
       ] = true;
     });
     oldEWU();
+    // The marks above suppress the delete events fired *while* the workspace
+    // rebuilds (oldEWU triggers a synchronous rebuild). Unlike move/create, a
+    // `delete<blockId>` fingerprint has no distinguishing position/content, so
+    // any mark the rebuild didn't consume would permanently shadow a genuine
+    // user deletion of that block — deletes would silently never sync. Clear
+    // the survivors now that the rebuild is done.
+    topBlockDeleteMarks.forEach((rep) => delete livescratchEvents[rep]);
   };
 
   // ---------- proxy machinery ----------
@@ -817,7 +827,7 @@ function installEngine() {
         try {
           retVal = action.bind(bindTo)(...args);
         } catch (e) {
-          console.error('[scratch-p2p] error on proxy run', e);
+          console.error('[scratch-collab] error on proxy run', e);
         }
         if (then) {
           if (retVal?.then)
@@ -868,7 +878,7 @@ function installEngine() {
         try {
           retVal = action.bind(bindTo)(...args);
         } catch (e) {
-          console.error('[scratch-p2p] error on proxy run', e);
+          console.error('[scratch-collab] error on proxy run', e);
         }
         if (then) {
           if (retVal?.then)
@@ -1130,7 +1140,7 @@ function installEngine() {
     return ret;
   });
 
-  // ---------- costume bitmap/svg paint edits (bytes sent P2P) ----------
+  // ---------- costume bitmap/svg paint edits (bytes sent to peers) ----------
   const oldUpdateBitmap = vm.updateBitmap;
   vm.updateBitmap = (...args) => {
     oldUpdateBitmap.bind(vm)(...args);
@@ -1377,7 +1387,7 @@ function installEngine() {
         await applyAssetUpdate(msg, true);
       }
     } catch (e) {
-      console.error('[scratch-p2p] error handling remote message', e);
+      console.error('[scratch-collab] error handling remote message', e);
     }
   };
 
@@ -1532,7 +1542,7 @@ function installEngine() {
       )
         rotationCenter = [costume.rotationCenterX, costume.rotationCenterY];
       return loadBitmap_(costume, runtime, rotationCenter).catch((error) => {
-        console.warn('[scratch-p2p] error loading bitmap image', error);
+        console.warn('[scratch-collab] error loading bitmap image', error);
         return costume;
       });
     };

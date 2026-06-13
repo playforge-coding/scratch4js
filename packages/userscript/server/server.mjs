@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * server.mjs — the scratch-p2p relay.
+ * server.mjs — the collaboration relay.
  *
  * One participant runs this; everyone's TurboWarp Desktop connects to it over a
  * plain WebSocket. It is a dumb star-topology relay with no Scratch knowledge:
@@ -14,12 +14,12 @@
  *   - If the host leaves, the oldest remaining client is promoted to host so
  *     future joiners still have a project source.
  *
- * Run it from the repo:  pnpm --filter scratch-p2p serve
- * Change the port with the SCRATCH_P2P_PORT env var (default 9070).
+ * Run it from the repo:  pnpm --filter userscript serve
+ * Change the port with the SCRATCH_COLLAB_PORT env var (default 9070).
  */
 import { WebSocketServer } from 'ws';
 
-const PORT = Number(process.env.SCRATCH_P2P_PORT || 9070);
+const PORT = Number(process.env.SCRATCH_COLLAB_PORT || 9070);
 
 const wss = new WebSocketServer({ host: '0.0.0.0', port: PORT });
 
@@ -28,7 +28,7 @@ let nextId = 1;
 const clients = new Map();
 let hostId = null;
 
-const log = (...a) => console.log('[scratch-p2p-server]', ...a);
+const log = (...a) => console.log('[scratch-collab-server]', ...a);
 
 function send(ws, obj) {
   if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(obj));

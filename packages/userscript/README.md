@@ -63,7 +63,7 @@ Common locations:
 
    ```bash
    pnpm --filter userscript serve          # listens on ws://0.0.0.0:9070
-   SCRATCH_P2P_PORT=4000 pnpm --filter userscript serve   # custom port
+   SCRATCH_COLLAB_PORT=4000 pnpm --filter userscript serve   # custom port
    ```
 
 2. **Everyone connects.** In TurboWarp Desktop, the **Collaboration** panel
@@ -80,7 +80,7 @@ Common locations:
 3. If the host leaves, the relay promotes the next participant to host so new
    joiners still get a project snapshot.
 
-Set `window.__scratchP2PDebug = true` in the editor console to trace the sync
+Set `window.__scratchCollabDebug = true` in the editor console to trace the sync
 path (listener attach, messages sent/received).
 
 ## How collaboration works

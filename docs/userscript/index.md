@@ -106,7 +106,7 @@ TWD_CONFIG_DIR=/path/to/turbowarp-desktop pnpm --filter userscript install-users
 
    ```bash
    pnpm --filter userscript serve          # listens on ws://0.0.0.0:9070
-   SCRATCH_P2P_PORT=4000 pnpm --filter userscript serve   # custom port
+   SCRATCH_COLLAB_PORT=4000 pnpm --filter userscript serve   # custom port
    ```
 
 2. **Everyone connects.** In TurboWarp Desktop, the **Collaboration** panel
@@ -120,7 +120,7 @@ On a LAN this just works. Across the internet the host must expose the port
 (port-forward, or a tunnel like Cloudflare Tunnel / Tailscale / ngrok) and share
 that address.
 
-Set `window.__scratchP2PDebug = true` in the editor console to trace the sync
+Set `window.__scratchCollabDebug = true` in the editor console to trace the sync
 path (listener attach, messages sent/received).
 
 ## Limitations
