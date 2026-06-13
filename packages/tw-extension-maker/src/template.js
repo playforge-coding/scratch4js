@@ -23,11 +23,11 @@ export const BUNDLERS = [
   { id: 'vite', label: 'Vite', hint: 'Consumes the Rollup plugin.' },
 ];
 
+// bun is intentionally omitted: WebContainers don't ship a `bun` binary.
 export const PACKAGE_MANAGERS = [
   { id: 'npm', label: 'npm' },
   { id: 'pnpm', label: 'pnpm' },
   { id: 'yarn', label: 'yarn' },
-  { id: 'bun', label: 'bun' },
 ];
 
 /**
@@ -46,17 +46,26 @@ export function createProjectFiles({ name, bundler, packageManager }) {
     packageManager,
   };
   const files = buildFileMap(opts);
-  files['package.json'] = pinDependencies(files['package.json']);
+  files['package.json'] = pinDependencies(
+    files['package.json'],
+    packageManager,
+  );
   Object.assign(files, wasmArchConfig(packageManager));
   const { id } = metaFor(opts);
   return { files, id };
 }
 
+// The wasm/WASI architecture both pnpm config locations declare.
+const SUPPORTED_ARCHITECTURES_OBJ = {
+  os: ['current', 'wasip1-threads'],
+  cpu: ['current', 'wasm32'],
+};
+
 // The WebContainer runs Node, but can't execute native prebuilt binaries, so
 // napi-based bundlers (Rspack, Rolldown) need their wasm32-wasip1-threads
-// binding. npm takes CLI flags (see installCommand); pnpm/yarn read a config
-// file declaring the supported architectures.
-const SUPPORTED_ARCHITECTURES = `supportedArchitectures:
+// binding. npm takes CLI flags (see installCommand); pnpm/yarn read it from a
+// config file declaring the supported architectures.
+const ARCH_YAML = `supportedArchitectures:
   os:
     - current
     - wasip1-threads
@@ -67,10 +76,15 @@ const SUPPORTED_ARCHITECTURES = `supportedArchitectures:
 
 function wasmArchConfig(packageManager) {
   if (packageManager === 'pnpm') {
-    return { 'pnpm-workspace.yaml': SUPPORTED_ARCHITECTURES };
+    // pnpm reads supportedArchitectures from pnpm-workspace.yaml, which must
+    // declare a non-empty `packages` field (the glob matches nothing here, so
+    // it's just this single project).
+    return {
+      'pnpm-workspace.yaml': `packages:\n  - 'packages/*'\n${ARCH_YAML}`,
+    };
   }
   if (packageManager === 'yarn') {
-    return { '.yarnrc.yml': SUPPORTED_ARCHITECTURES };
+    return { '.yarnrc.yml': ARCH_YAML };
   }
   return {};
 }
@@ -106,11 +120,19 @@ export function installCommand(packageManager) {
 
 export { toExtensionId };
 
-function pinDependencies(packageJsonSource) {
+function pinDependencies(packageJsonSource, packageManager) {
   const pkg = JSON.parse(packageJsonSource);
   pkg.devDependencies = pkg.devDependencies || {};
   if (pkg.devDependencies['@rsbuild/core']) {
     pkg.devDependencies['@rsbuild/core'] = RSBUILD_MIN;
+  }
+  // Older pnpm reads supportedArchitectures from the package.json `pnpm` field
+  // rather than pnpm-workspace.yaml; declare it in both places.
+  if (packageManager === 'pnpm') {
+    pkg.pnpm = {
+      ...pkg.pnpm,
+      supportedArchitectures: SUPPORTED_ARCHITECTURES_OBJ,
+    };
   }
   return JSON.stringify(pkg, null, 2) + '\n';
 }
