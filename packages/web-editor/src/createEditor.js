@@ -48,6 +48,8 @@ export function createEditor(config) {
     files: {},
     /** @type {string|null} */
     activeFile: null,
+    /** ordered paths of files open as editor tabs @type {string[]} */
+    openFiles: [],
     /** project metadata returned by createProject */
     project: null,
     /** build descriptor: { command, outputPath, mimeType, label } */
@@ -77,6 +79,7 @@ export function createEditor(config) {
         project: result.project ?? null,
         build: result.build,
         activeFile: entryFile,
+        openFiles: entryFile ? [entryFile] : [],
         booted: true,
       });
 
@@ -91,8 +94,28 @@ export function createEditor(config) {
       }
     },
 
+    /** Activate a file, opening it as a tab if it isn't already. */
     setActive(path) {
-      store.set({ activeFile: path });
+      store.set((s) => ({
+        activeFile: path,
+        openFiles: s.openFiles.includes(path)
+          ? s.openFiles
+          : [...s.openFiles, path],
+      }));
+    },
+
+    /** Close an editor tab; if it was active, fall back to a neighbouring tab. */
+    closeFile(path) {
+      store.set((s) => {
+        const idx = s.openFiles.indexOf(path);
+        if (idx === -1) return {};
+        const openFiles = s.openFiles.filter((p) => p !== path);
+        const activeFile =
+          s.activeFile === path
+            ? (openFiles[idx] ?? openFiles[idx - 1] ?? null)
+            : s.activeFile;
+        return { openFiles, activeFile };
+      });
     },
 
     updateFile(path, contents) {
@@ -113,6 +136,9 @@ export function createEditor(config) {
       store.set((s) => ({
         files: { ...s.files, [path]: contents },
         activeFile: path,
+        openFiles: s.openFiles.includes(path)
+          ? s.openFiles
+          : [...s.openFiles, path],
       }));
       try {
         await engine.addFile(path, contents);
@@ -125,9 +151,12 @@ export function createEditor(config) {
       store.set((s) => {
         const files = { ...s.files };
         delete files[path];
+        const openFiles = s.openFiles.filter((p) => p !== path);
         const activeFile =
-          s.activeFile === path ? Object.keys(files)[0] || null : s.activeFile;
-        return { files, activeFile };
+          s.activeFile === path
+            ? (openFiles.at(-1) ?? Object.keys(files)[0] ?? null)
+            : s.activeFile;
+        return { files, openFiles, activeFile };
       });
       try {
         await engine.removeFile(path);

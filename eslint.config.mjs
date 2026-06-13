@@ -14,6 +14,11 @@ export default [
     languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
   },
   {
+    // The scratch-p2p browser extension uses the WebExtension APIs (chrome/browser).
+    files: ['**/scratch-p2p/src/**/*.js'],
+    languageOptions: { globals: { ...globals.webextensions } },
+  },
+  {
     // TurboWarp extension sources reference `Scratch`, a global injected by the
     // host page (the plugin's IIFE wrapper binds it as a parameter).
     files: [

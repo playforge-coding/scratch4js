@@ -84,7 +84,7 @@ importers:
         version: 6.2.1
       scratch-vm:
         specifier: github:TurboWarp/scratch-vm#develop
-        version: https://codeload.github.com/TurboWarp/scratch-vm/tar.gz/43f13efd1883eeef8f82616faf69380ff75ab068(@turbowarp/scratch-svg-renderer@1.1.0)(webpack@5.107.2)
+        version: https://codeload.github.com/TurboWarp/scratch-vm/tar.gz/43f13efd1883eeef8f82616faf69380ff75ab068(@turbowarp/scratch-svg-renderer@1.1.0(scratch-render-fonts@1.0.252))(webpack@5.107.2)
       scratch4js:
         specifier: workspace:*
         version: link:../scratch4js
@@ -101,6 +101,16 @@ importers:
       '@modelcontextprotocol/inspector':
         specifier: ^0.22.0
         version: 0.22.0(@types/node@25.9.2)(@types/react@19.2.17)(typescript@5.9.3)
+
+  packages/scratch-p2p:
+    dependencies:
+      peerjs:
+        specifier: ^1.5.4
+        version: 1.5.5
+    devDependencies:
+      '@rsbuild/core':
+        specifier: ^1.5.0
+        version: 1.7.5
 
   packages/scratch4js:
     dependencies:
@@ -149,7 +159,7 @@ importers:
         version: https://codeload.github.com/TurboWarp/scratch-render/tar.gz/a67f7c9c07d459582c227d4fd3fae8f59d8fc9ce(webpack@5.107.2)
       scratch-vm:
         specifier: github:TurboWarp/scratch-vm#43f13efd1883eeef8f82616faf69380ff75ab068
-        version: https://codeload.github.com/TurboWarp/scratch-vm/tar.gz/43f13efd1883eeef8f82616faf69380ff75ab068(@turbowarp/scratch-svg-renderer@1.1.0)(webpack@5.107.2)
+        version: https://codeload.github.com/TurboWarp/scratch-vm/tar.gz/43f13efd1883eeef8f82616faf69380ff75ab068(@turbowarp/scratch-svg-renderer@1.1.0(scratch-render-fonts@1.0.252))(webpack@5.107.2)
       web-editor:
         specifier: workspace:*
         version: link:../web-editor
@@ -772,6 +782,10 @@ packages:
       monaco-editor: '>= 0.25.0 < 1'
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  '@msgpack/msgpack@2.8.0':
+    resolution: {integrity: sha512-h9u4u/jiIRKbq25PM+zymTyW6bhTzELvOoUd+AvYriWOAKpLGnIamaET3pnHYoI5iYphAHBI4ayx0MehR+VVPQ==}
+    engines: {node: '>= 10'}
 
   '@napi-rs/wasm-runtime@1.0.7':
     resolution: {integrity: sha512-SeDnOO0Tk7Okiq6DbXmmBODgOAb9dp9gjlphokTUxmt8U3liIP1ZsozBahH69j/RJv+Rfs6IwUKHTgQYJ/HBAw==}
@@ -3255,6 +3269,9 @@ packages:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
     engines: {node: '>=6'}
 
+  eventemitter3@4.0.7:
+    resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
+
   events@3.3.0:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
@@ -4621,6 +4638,14 @@ packages:
     resolution: {integrity: sha512-BT6eelPB1EyGHo8pC0o9Bl6k6SYVhKO1jEbd3lcTrtr7XHdjP8BW1YpfCV3G9Kwkxgattk+S5q2/RvuttCsS1g==}
     engines: {node: '>= 0.10'}
 
+  peerjs-js-binarypack@2.1.0:
+    resolution: {integrity: sha512-YIwCC+pTzp3Bi8jPI9UFKO0t0SLo6xALnHkiNt/iUFmUUZG0fEEmEyFKvjsDKweiFitzHRyhuh6NvyJZ4nNxMg==}
+    engines: {node: '>= 14.0.0'}
+
+  peerjs@1.5.5:
+    resolution: {integrity: sha512-viMUCPDL6CSfOu0ZqVcFqbWRXNHIbv2lPqNbrBIjbFYrflebOjItJ4hPfhjnuUCstqciHVu9vVJ7jFqqKi/EuQ==}
+    engines: {node: '>= 14'}
+
   pend@1.2.0:
     resolution: {integrity: sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg==}
 
@@ -5099,6 +5124,9 @@ packages:
 
   scroll-into-view-if-needed@3.1.0:
     resolution: {integrity: sha512-49oNpRjWRvnU8NyGVmUaYG4jtTkNonFZI86MmGRDqBphEK2EXT9gdEUoQPZhuBM8yWHxCWbobltqYO5M4XrUvQ==}
+
+  sdp@3.2.2:
+    resolution: {integrity: sha512-xZocWwfyp4hkbN4hLWxMjmv2Q8aNa9MhmOZ7L9aCZPT+dZsgRr6wZRrSYE3HTdyk/2pZKPSgqI7ns7Een1xMSA==}
 
   seek-bzip@1.0.6:
     resolution: {integrity: sha512-e1QtP3YL5tWww8uKaOCQ18UxIT2laNBXHjV/S2WYCiK4udiv8lkG89KRIoCjUagnAmCBurjF4zEVX2ByBbnCjQ==}
@@ -5792,6 +5820,10 @@ packages:
     peerDependenciesMeta:
       webpack-cli:
         optional: true
+
+  webrtc-adapter@9.0.5:
+    resolution: {integrity: sha512-U9vjByy/sK2OMXu5mmfuZFKTMIUQe34c0JXRO+oDrxJTsntdYT2iIFwYMOV7HhMTuktcZLGf2W1N/OcSf9ssWg==}
+    engines: {node: '>=6.0.0', npm: '>=3.10.0'}
 
   whatwg-url@5.0.0:
     resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
@@ -6504,6 +6536,8 @@ snapshots:
       monaco-editor: 0.52.2
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
+
+  '@msgpack/msgpack@2.8.0': {}
 
   '@napi-rs/wasm-runtime@1.0.7':
     dependencies:
@@ -9351,6 +9385,8 @@ snapshots:
 
   event-target-shim@5.0.1: {}
 
+  eventemitter3@4.0.7: {}
+
   events@3.3.0: {}
 
   eventsource-parser@3.1.0: {}
@@ -11051,6 +11087,15 @@ snapshots:
       sha.js: 2.4.12
       to-buffer: 1.2.2
 
+  peerjs-js-binarypack@2.1.0: {}
+
+  peerjs@1.5.5:
+    dependencies:
+      '@msgpack/msgpack': 2.8.0
+      eventemitter3: 4.0.7
+      peerjs-js-binarypack: 2.1.0
+      webrtc-adapter: 9.0.5
+
   pend@1.2.0: {}
 
   performance-now@2.1.0: {}
@@ -11743,7 +11788,7 @@ snapshots:
 
   scratch-translate-extension-languages@1.0.7: {}
 
-  scratch-vm@https://codeload.github.com/TurboWarp/scratch-vm/tar.gz/43f13efd1883eeef8f82616faf69380ff75ab068(@turbowarp/scratch-svg-renderer@1.1.0)(webpack@5.107.2):
+  scratch-vm@https://codeload.github.com/TurboWarp/scratch-vm/tar.gz/43f13efd1883eeef8f82616faf69380ff75ab068(@turbowarp/scratch-svg-renderer@1.1.0(scratch-render-fonts@1.0.252))(webpack@5.107.2):
     dependencies:
       '@turbowarp/json': 0.1.2
       '@turbowarp/jszip': 3.12.0
@@ -11770,6 +11815,8 @@ snapshots:
   scroll-into-view-if-needed@3.1.0:
     dependencies:
       compute-scroll-into-view: 3.1.1
+
+  sdp@3.2.2: {}
 
   seek-bzip@1.0.6:
     dependencies:
@@ -12543,6 +12590,10 @@ snapshots:
       - lightningcss
       - postcss
       - uglify-js
+
+  webrtc-adapter@9.0.5:
+    dependencies:
+      sdp: 3.2.2
 
   whatwg-url@5.0.0:
     dependencies:

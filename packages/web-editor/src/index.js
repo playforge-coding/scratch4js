@@ -13,6 +13,7 @@ export {
 export { SplitPane } from './layout/SplitPane.jsx';
 export { Panel } from './layout/Panel.jsx';
 export { CodeEditor } from './editor/CodeEditor.jsx';
+export { EditorTabs } from './EditorTabs.jsx';
 export { TerminalPanel } from './Terminal.jsx';
 export { FileTree } from './FileTree.jsx';
 export {

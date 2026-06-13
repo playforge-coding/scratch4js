@@ -30,6 +30,11 @@
     "activeMatch": "/web-editor/"
   },
   {
+    "text": "P2P collab",
+    "link": "/scratch-p2p/",
+    "activeMatch": "/scratch-p2p/"
+  },
+  {
     "text": "Extension bundler",
     "items": [
       {

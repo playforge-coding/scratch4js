@@ -88,22 +88,58 @@ export class WebContainerEngine {
 
     /** @type {Set<(status: string) => void>} */
     this.statusSubs = new Set();
-    /** @type {Set<(chunk: string) => void>} */
-    this.outputSubs = new Set();
-    this.outputBuffer = '';
     /** Cross-origin URL of the in-container preview server (once ready). */
     this.previewUrl = null;
     /** @type {Set<(url: string) => void>} */
     this.previewSubs = new Set();
 
-    /** @type {import('@webcontainer/api').WebContainerProcess | null} */
-    this.shell = null;
-    /** @type {WritableStreamDefaultWriter<string> | null} */
-    this.shellInput = null;
-
     this.cols = 80;
     this.rows = 24;
+
+    /**
+     * Interactive terminal sessions, each backed by its own shell process and
+     * scrollback buffer. The first ("main") session also carries boot, install,
+     * and build output so engine-driven commands have a visible home.
+     * @type {Map<string, TerminalSession>}
+     */
+    this.terminals = new Map();
+    this._terminalSeq = 0;
+    /** @type {Set<(terminals: {id:string,title:string,main:boolean}[]) => void>} */
+    this.terminalSubs = new Set();
+    /** id of the session that receives boot/install/build output. */
+    this.mainTerminalId = this._createSession().id;
+
     this._bootPromise = null;
+  }
+
+  /**
+   * @typedef {object} TerminalSession
+   * @property {string} id
+   * @property {string} title
+   * @property {import('@webcontainer/api').WebContainerProcess | null} process
+   * @property {WritableStreamDefaultWriter<string> | null} input
+   * @property {string} buffer  recent output, replayed to late subscribers
+   * @property {Set<(chunk: string) => void>} subs
+   * @property {number} cols
+   * @property {number} rows
+   */
+
+  /** Allocate a terminal session record (no shell process spawned yet). */
+  _createSession() {
+    const id = String(++this._terminalSeq);
+    /** @type {TerminalSession} */
+    const session = {
+      id,
+      title: `Terminal ${id}`,
+      process: null,
+      input: null,
+      buffer: '',
+      subs: new Set(),
+      cols: this.cols,
+      rows: this.rows,
+    };
+    this.terminals.set(id, session);
+    return session;
   }
 
   /** @param {(status: string) => void} cb */
@@ -113,11 +149,43 @@ export class WebContainerEngine {
     return () => this.statusSubs.delete(cb);
   }
 
-  /** @param {(chunk: string) => void} cb — replays scrollback immediately. */
+  /** Snapshot of the open terminals, for rendering a tab bar. */
+  listTerminals() {
+    return [...this.terminals.values()].map((s) => ({
+      id: s.id,
+      title: s.title,
+      main: s.id === this.mainTerminalId,
+    }));
+  }
+
+  /** @param {(terminals: {id:string,title:string,main:boolean}[]) => void} cb */
+  onTerminals(cb) {
+    this.terminalSubs.add(cb);
+    cb(this.listTerminals());
+    return () => this.terminalSubs.delete(cb);
+  }
+
+  _notifyTerminals() {
+    const list = this.listTerminals();
+    for (const cb of this.terminalSubs) cb(list);
+  }
+
+  /**
+   * Subscribe to one terminal's output; replays its scrollback immediately.
+   * @param {string} id
+   * @param {(chunk: string) => void} cb
+   */
+  onTerminalOutput(id, cb) {
+    const session = this.terminals.get(id);
+    if (!session) return () => {};
+    session.subs.add(cb);
+    if (session.buffer) cb(session.buffer);
+    return () => session.subs.delete(cb);
+  }
+
+  /** Back-compat: subscribe to the main terminal's output. */
   onOutput(cb) {
-    this.outputSubs.add(cb);
-    if (this.outputBuffer) cb(this.outputBuffer);
-    return () => this.outputSubs.delete(cb);
+    return this.onTerminalOutput(this.mainTerminalId, cb);
   }
 
   /** @param {(url: string) => void} cb — fires once the preview server is up. */
@@ -132,10 +200,16 @@ export class WebContainerEngine {
     for (const cb of this.statusSubs) cb(status);
   }
 
-  /** @param {string} chunk */
+  /** Append a chunk to a session's buffer and fan it out to subscribers. */
+  _emit(session, chunk) {
+    session.buffer = (session.buffer + chunk).slice(-OUTPUT_BUFFER_LIMIT);
+    for (const cb of session.subs) cb(chunk);
+  }
+
+  /** Write to the main terminal (boot/install/build/system output). */
   _output(chunk) {
-    this.outputBuffer = (this.outputBuffer + chunk).slice(-OUTPUT_BUFFER_LIMIT);
-    for (const cb of this.outputSubs) cb(chunk);
+    const main = this.terminals.get(this.mainTerminalId);
+    if (main) this._emit(main, chunk);
   }
 
   /** Write a status line into the terminal, styled (dim cyan). */
@@ -191,13 +265,52 @@ export class WebContainerEngine {
   }
 
   async _startShell() {
-    this.shell = await this.container.spawn(this.shellCommand, {
-      terminal: { cols: this.cols, rows: this.rows },
+    await this._spawnShellInto(this.terminals.get(this.mainTerminalId));
+  }
+
+  /** Spawn an interactive shell and wire it to a terminal session. */
+  async _spawnShellInto(session) {
+    const proc = await this.container.spawn(this.shellCommand, {
+      terminal: { cols: session.cols, rows: session.rows },
     });
-    this.shell.output.pipeTo(
-      new WritableStream({ write: (chunk) => this._output(chunk) }),
+    proc.output.pipeTo(
+      new WritableStream({ write: (chunk) => this._emit(session, chunk) }),
     );
-    this.shellInput = this.shell.input.getWriter();
+    session.process = proc;
+    session.input = proc.input.getWriter();
+    return proc;
+  }
+
+  /**
+   * Open an additional interactive terminal (its own shell). Requires the
+   * container to be running.
+   * @returns {Promise<string>} the new terminal's id
+   */
+  async openTerminal() {
+    if (!this.container) throw new Error('WebContainer is not running.');
+    const session = this._createSession();
+    this._notifyTerminals();
+    await this._spawnShellInto(session);
+    return session.id;
+  }
+
+  /** Close a terminal (the main terminal is kept — it carries build output). */
+  async closeTerminal(id) {
+    if (id === this.mainTerminalId) return;
+    const session = this.terminals.get(id);
+    if (!session) return;
+    this.terminals.delete(id);
+    this._notifyTerminals();
+    try {
+      session.input?.releaseLock();
+    } catch {
+      /* writer already released */
+    }
+    try {
+      session.process?.kill();
+    } catch {
+      /* process already exited */
+    }
   }
 
   async _startPreviewServer() {
@@ -214,19 +327,35 @@ export class WebContainerEngine {
     await this.container.spawn('node', ['.web-editor-server.mjs']);
   }
 
-  /** Forward a keystroke/paste from the terminal to the interactive shell. */
-  writeInput(data) {
-    this.shellInput?.write(data);
+  /** Forward a keystroke/paste from a terminal to its interactive shell. */
+  writeTerminalInput(id, data) {
+    this.terminals.get(id)?.input?.write(data);
   }
 
-  resize(cols, rows) {
-    this.cols = cols;
-    this.rows = rows;
+  resizeTerminal(id, cols, rows) {
+    const session = this.terminals.get(id);
+    if (!session) return;
+    session.cols = cols;
+    session.rows = rows;
+    // The main terminal's size drives the pty used for engine-run build commands.
+    if (id === this.mainTerminalId) {
+      this.cols = cols;
+      this.rows = rows;
+    }
     try {
-      this.shell?.resize({ cols, rows });
+      session.process?.resize({ cols, rows });
     } catch {
       /* shell not started yet */
     }
+  }
+
+  /** Back-compat: input/resize against the main terminal. */
+  writeInput(data) {
+    this.writeTerminalInput(this.mainTerminalId, data);
+  }
+
+  resize(cols, rows) {
+    this.resizeTerminal(this.mainTerminalId, cols, rows);
   }
 
   async writeFile(path, contents) {
@@ -300,7 +429,7 @@ export class WebContainerEngine {
   /** Nudge the idle shell to redraw a fresh prompt after an engine-run command. */
   _refreshShellPrompt() {
     try {
-      this.shellInput?.write('\n');
+      this.terminals.get(this.mainTerminalId)?.input?.write('\n');
     } catch {
       /* shell not started */
     }

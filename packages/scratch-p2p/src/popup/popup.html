@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scratch P2P</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Scratch&nbsp;P2P</h1>
+      <span id="dot" class="dot idle" title="Disconnected"></span>
+    </header>
+
+    <p id="hint" class="hint">
+      Open a project in the Scratch or TurboWarp editor, then host or join a
+      session.
+    </p>
+
+    <section id="idle-view">
+      <button id="host-btn" class="primary">Host a session</button>
+      <div class="divider"><span>or</span></div>
+      <label for="join-input">Join with a room code</label>
+      <div class="row">
+        <input
+          id="join-input"
+          type="text"
+          placeholder="room code"
+          autocomplete="off"
+        />
+        <button id="join-btn">Join</button>
+      </div>
+    </section>
+
+    <section id="active-view" hidden>
+      <p id="role-line" class="role"></p>
+      <label>Room code</label>
+      <div class="row">
+        <input id="room-code" type="text" readonly />
+        <button id="copy-btn" title="Copy">Copy</button>
+      </div>
+      <p class="peers" id="peers-line">No one else here yet.</p>
+      <button id="leave-btn" class="danger">Leave session</button>
+    </section>
+
+    <p id="error-line" class="error" hidden></p>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

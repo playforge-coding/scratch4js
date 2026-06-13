@@ -18,6 +18,7 @@ website, drive it all from an AI agent, and build & bundle TurboWarp extensions.
 | [`packages/create-tw-extension`](packages/create-tw-extension) | `create-tw-extension` | Scaffolder (`npm create tw-extension`) for a new TurboWarp extension project with your choice of bundler.                 |
 | [`packages/web-editor`](packages/web-editor)                   | `web-editor`          | Reusable React building blocks for in-browser IDEs: split-pane layout, Monaco, an xterm/WebContainer terminal, file tree. |
 | [`packages/tw-extension-maker`](packages/tw-extension-maker)   | `tw-extension-maker`  | In-browser IDE (built on `web-editor`) that bundles a TurboWarp extension in a WebContainer and previews it live.         |
+| [`packages/scratch-p2p`](packages/scratch-p2p)                 | `scratch-p2p`         | Chrome/Firefox extension for fully peer-to-peer real-time collaboration in the Scratch & TurboWarp editors (PeerJS).      |
 | [`userscript`](userscript)                                     | —                     | Prebuilt TurboWarp Desktop userscript + userstyle that live-reload the project the MCP server edits.                      |
 
 ## How they fit together
@@ -66,7 +67,8 @@ Then:
 │   ├── tw-plugin-rollup/    # Rollup/Rolldown/Vite extension bundler plugin
 │   ├── create-tw-extension/ # extension scaffolder CLI
 │   ├── web-editor/          # in-browser IDE building blocks
-│   └── tw-extension-maker/  # in-browser extension IDE
+│   ├── tw-extension-maker/  # in-browser extension IDE
+│   └── scratch-p2p/         # P2P collab browser extension (Scratch & TurboWarp)
 ├── docs/                    # Rspress documentation site
 ├── userscript/              # prebuilt TurboWarp Desktop userscript + userstyle
 ├── pnpm-workspace.yaml

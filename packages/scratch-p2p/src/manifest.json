@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "Scratch P2P — live collab for Scratch & TurboWarp",
+  "description": "Collaborate on Scratch projects in real time over a fully peer-to-peer WebRTC connection. Works in the Scratch and TurboWarp editors.",
+  "version": "0.1.0",
+  "icons": {
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Scratch P2P"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://scratch.mit.edu/*",
+    "https://turbowarp.org/*",
+    "https://*.turbowarp.org/*",
+    "https://0.peerjs.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://scratch.mit.edu/projects/*",
+        "https://turbowarp.org/*",
+        "https://*.turbowarp.org/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["page/sync.js"],
+      "matches": [
+        "https://scratch.mit.edu/*",
+        "https://turbowarp.org/*",
+        "https://*.turbowarp.org/*"
+      ]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "scratch-p2p@playforge-coding",
+      "strict_min_version": "128.0"
+    }
+  }
+}

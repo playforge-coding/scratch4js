@@ -1,14 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
-import {
-  Blocks,
-  Eraser,
-  FileCode2,
-  MonitorPlay,
-  TerminalSquare,
-} from 'lucide-react';
+import { Blocks, Eraser, MonitorPlay, TerminalSquare } from 'lucide-react';
 import {
   CodeEditor,
   EditorProvider,
+  EditorTabs,
   FileTree,
   IconButton,
   Panel,
@@ -16,7 +11,6 @@ import {
   TerminalPanel,
   Tooltip,
   TooltipProvider,
-  useEditorState,
 } from 'web-editor';
 
 import { saveProject } from '../db.js';
@@ -26,7 +20,6 @@ import { BlocksEditor } from '../scratch/BlocksEditor.jsx';
 import { Stage } from '../scratch/Stage.jsx';
 
 function Workspace() {
-  const { activeFile } = useEditorState();
   const terminalApi = useRef(null);
 
   return (
@@ -50,12 +43,13 @@ function Workspace() {
             defaultSizes={[68, 32]}
             minSize={[120, 90]}
           >
-            <Panel
-              icon={<FileCode2 size={14} />}
-              title={activeFile || 'Editor'}
-              flush
-            >
-              <CodeEditor />
+            <Panel flush>
+              <div className="flex h-full flex-col">
+                <EditorTabs />
+                <div className="min-h-0 flex-1">
+                  <CodeEditor />
+                </div>
+              </div>
             </Panel>
             <Panel
               icon={<TerminalSquare size={14} />}
