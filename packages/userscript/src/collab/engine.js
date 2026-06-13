@@ -10,7 +10,6 @@
  * onSendLocal) and exposes applyRemote() / loadProjectBytes() /
  * saveProjectBytes() for the transport to call.
  */
-import { debug } from '../util.js';
 
 // The transport registers its gated sender here; the engine calls it for every
 // locally-produced edit. Default no-op until collaboration is wired up.
@@ -146,22 +145,59 @@ async function trap() {
 
   installEngine();
 
-  // Trap ScratchBlocks once the blocks workspace mounts.
-  listenForObj('[class^="gui_blocks-wrapper"]', (el) => {
-    const fiber = searchFiber(
-      getReactFiber(el),
-      (n) => n.stateNode && n.stateNode.ScratchBlocks,
-    );
-    if (!fiber) return;
-    ScratchBlocks = fiber.stateNode.ScratchBlocks;
-    if (!window.Blockly) window.Blockly = ScratchBlocks;
-    debug('ScratchBlocks trapped');
-    attachBlockListener();
+  // Once the blocks workspace mounts, trap ScratchBlocks (the Blockly
+  // namespace) — block-level sync needs it both to capture local edits and to
+  // replay remote ones.
+  listenForObj('[class^="gui_blocks-wrapper"]', () => trapScratchBlocks());
+
+  // Lightweight probe so the user can check what got trapped from the console.
+  window.__scratchP2PStatus = () => ({
+    vm: !!vm,
+    scratchBlocks: !!ScratchBlocks,
+    workspace: !!getWorkspace(),
+    listenerAttached: !!blockListenerAttachedTo,
+    engineReady,
   });
 
   engineReady = true;
   engineReadyWaiters.splice(0).forEach((r) => r());
   console.log('[scratch-p2p] editor trapped, engine ready');
+}
+
+// ScratchBlocks may not exist the instant the wrapper div mounts (the blocks
+// component creates it a beat later), and different builds surface it
+// differently — on the React instance, or as a global. Try every route and
+// retry until it appears, logging the outcome so failures aren't silent.
+function looksLikeScratchBlocks(o) {
+  return !!(o && o.Workspace && o.Workspace.WorkspaceDB_ && o.Events);
+}
+function trapScratchBlocks(tries = 0) {
+  if (ScratchBlocks) return;
+  let sb = null;
+  if (looksLikeScratchBlocks(window.ScratchBlocks)) sb = window.ScratchBlocks;
+  else if (looksLikeScratchBlocks(window.Blockly)) sb = window.Blockly;
+  else {
+    const el = document.querySelector('[class^="gui_blocks-wrapper"]');
+    const fiber =
+      el &&
+      searchFiber(
+        getReactFiber(el),
+        (n) => n.stateNode && looksLikeScratchBlocks(n.stateNode.ScratchBlocks),
+      );
+    if (fiber) sb = fiber.stateNode.ScratchBlocks;
+  }
+  if (!sb) {
+    if (tries < 50) setTimeout(() => trapScratchBlocks(tries + 1), 200);
+    else
+      console.warn(
+        '[scratch-p2p] could not find ScratchBlocks — block edits will not sync',
+      );
+    return;
+  }
+  ScratchBlocks = sb;
+  if (!window.Blockly) window.Blockly = ScratchBlocks;
+  console.log('[scratch-p2p] ScratchBlocks trapped');
+  attachBlockListener();
 }
 
 // The Blockly workspace that drives block-level sync often finishes injecting
@@ -183,7 +219,7 @@ function attachBlockListener(tries = 0) {
   ws.removeChangeListener(blockListener);
   ws.addChangeListener(blockListener);
   blockListenerAttachedTo = ws;
-  debug('block sync listener attached');
+  console.log('[scratch-p2p] block sync listener attached');
 }
 
 // ============================================ ported sync engine ==========
