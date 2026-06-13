@@ -13,7 +13,7 @@
     "docs:preview": "rspress preview",
     "fmt": "prettier --write .",
     "lint": "eslint .",
-    "install-userscript": "node userscript/install.mjs"
+    "install-userscript": "pnpm --filter userscript deploy"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,19 +1,15 @@
-// scratch-mcp live-reload userscript for TurboWarp Desktop.
-//
-// Connects to the scratch-mcp bridge over a plain WebSocket and, on command,
-// (re)loads or runs the project — so edits an agent makes through the MCP server
-// appear in the editor instantly.
-//
-// Protocol (JSON over WebSocket):
-//   bridge → us:  { id, method: "loadSB3" | "start" | "stop" | "screenshot", params? }
-//   us → bridge:  { id, ok: true, result? } | { id, ok: false, error }
-//
-// TurboWarp Desktop loads this file automatically from its config directory.
-// No build step: it is plain source using the browser's WebSocket and fetch.
-
-(() => {
-  'use strict';
-
+/*
+ * live-reload.js — scratch-mcp live preview.
+ *
+ * Connects to the scratch-mcp bridge over a plain WebSocket and, on command,
+ * (re)loads or runs the project — so edits an agent makes through the MCP server
+ * appear in the editor instantly.
+ *
+ * Protocol (JSON over WebSocket):
+ *   bridge → us:  { id, method: "loadSB3" | "start" | "stop" | "screenshot", params? }
+ *   us → bridge:  { id, ok: true, result? } | { id, ok: false, error }
+ */
+export function initLiveReload() {
   const PORT = 9060;
   const HTTP_ORIGIN = `http://localhost:${PORT}`;
   const WS_URL = `ws://localhost:${PORT}`;
@@ -160,4 +156,4 @@
   } else {
     connect();
   }
-})();
+}

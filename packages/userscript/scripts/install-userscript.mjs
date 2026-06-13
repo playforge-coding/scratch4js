@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /**
- * Copy `userscript.js` + `userstyle.css` into TurboWarp Desktop's config
- * directory, where the app loads them from. Run after editing either file:
+ * Copy the built `dist/userscript.js` + `dist/userstyle.css` into TurboWarp
+ * Desktop's config directory, where the app loads them from. Build first, then
+ * install:
  *
- *   pnpm install-userscript
+ *   pnpm --filter userscript build
+ *   pnpm --filter userscript install-userscript
+ *
+ * (or just `pnpm --filter userscript deploy`, which does both.)
  *
  * TurboWarp Desktop must have been launched at least once (so its config dir
- * exists), and must be fully restarted afterwards to pick up the new script.
- *
+ * exists) and must be fully restarted afterwards to pick up the new script.
  * Override the destination with TWD_CONFIG_DIR if your install lives elsewhere.
  */
 import { copyFile, access } from 'node:fs/promises';
@@ -16,7 +19,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const FILES = ['userscript.js', 'userstyle.css'];
+const DIST = join(HERE, '..', 'dist');
+const FILES = ['userscript.js', 'userstyle.css', 'THIRD-PARTY-NOTICES.md'];
 
 /** Candidate config directories, most-specific first, per platform. */
 function candidates() {
@@ -68,6 +72,13 @@ async function exists(p) {
   }
 }
 
+if (!(await exists(join(DIST, 'userscript.js')))) {
+  console.error(
+    'dist/userscript.js not found — run `pnpm --filter userscript build` first.',
+  );
+  process.exit(1);
+}
+
 const tried = candidates();
 let dest = null;
 for (const dir of tried) {
@@ -88,7 +99,7 @@ if (!dest) {
 }
 
 for (const name of FILES) {
-  await copyFile(join(HERE, name), join(dest, name));
+  await copyFile(join(DIST, name), join(dest, name));
   console.log(`copied ${name} -> ${dest}`);
 }
 console.log(

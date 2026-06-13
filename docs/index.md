@@ -35,7 +35,7 @@ features:
   - title: Build extensions in the browser
     details: The tw-extension-maker IDE bundles your extension in a WebContainer and previews it live in an embedded Scratch editor — built on web-editor's reusable Monaco + xterm building blocks.
     icon: 🛠️
-  - title: Collaborate peer-to-peer
-    details: The scratch-p2p browser extension adds real-time, fully peer-to-peer collaboration to the Scratch and TurboWarp editors over WebRTC (PeerJS) — blocks, sprites, costumes and sounds stay in sync with no backend server.
+  - title: Collaborate in real time
+    details: The TurboWarp Desktop userscript adds real-time, multi-editor collaboration over a small WebSocket relay one participant runs — blocks, sprites, costumes and sounds stay in sync — plus scratch-mcp live-reload.
     icon: 👥
 ---

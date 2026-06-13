@@ -1,0 +1,153 @@
+/*
+ * userstyle.css — TurboWarp Desktop userstyle for both features:
+ *   #scratch-mcp-status  — scratch-mcp live-reload badge
+ *   #scratch-p2p-panel   — collaboration control panel
+ */
+
+/* ---- scratch-mcp live-reload badge ------------------------------------- */
+#scratch-mcp-status {
+  position: fixed;
+  bottom: 8px;
+  left: 8px;
+  z-index: 99999;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font:
+    12px/1.4 system-ui,
+    sans-serif;
+  color: #cdd6f4;
+  background: #1e1e2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  opacity: 0.9;
+  pointer-events: none;
+  user-select: none;
+}
+
+#scratch-mcp-status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f38ba8; /* disconnected */
+}
+#scratch-mcp-status[data-status='connecting']::before {
+  background: #f9e2af;
+}
+#scratch-mcp-status[data-status='connected']::before {
+  background: #a6e3a1;
+}
+#scratch-mcp-status .label {
+  font-weight: 600;
+}
+#scratch-mcp-status .path {
+  opacity: 0.7;
+}
+
+/* ---- collaboration control panel --------------------------------------- */
+#scratch-p2p-panel {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  z-index: 99999;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 8px;
+  font:
+    12px/1.4 system-ui,
+    sans-serif;
+  color: #cdd6f4;
+  background: #1e1e2e;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  user-select: none;
+}
+
+#scratch-p2p-panel.sp2p-collapsed {
+  width: auto;
+}
+#scratch-p2p-panel.sp2p-collapsed .sp2p-sub,
+#scratch-p2p-panel.sp2p-collapsed .sp2p-form,
+#scratch-p2p-panel.sp2p-collapsed .sp2p-leave {
+  display: none;
+}
+
+#scratch-p2p-panel .sp2p-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#scratch-p2p-panel .sp2p-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #6c7086; /* idle */
+  flex: none;
+}
+#scratch-p2p-panel[data-state='connecting'] .sp2p-dot {
+  background: #f9e2af;
+}
+#scratch-p2p-panel[data-state='hosting'] .sp2p-dot,
+#scratch-p2p-panel[data-state='connected'] .sp2p-dot {
+  background: #a6e3a1;
+}
+#scratch-p2p-panel[data-state='error'] .sp2p-dot {
+  background: #f38ba8;
+}
+
+#scratch-p2p-panel .sp2p-title {
+  font-weight: 600;
+  flex: 1;
+}
+
+#scratch-p2p-panel .sp2p-x {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #cdd6f4;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+#scratch-p2p-panel .sp2p-sub {
+  opacity: 0.75;
+  font-size: 11px;
+  word-break: break-all;
+}
+
+#scratch-p2p-panel .sp2p-form {
+  display: flex;
+  gap: 6px;
+}
+
+#scratch-p2p-panel .sp2p-url {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border-radius: 5px;
+  border: 1px solid #45475a;
+  background: #11111b;
+  color: #cdd6f4;
+  font: inherit;
+}
+
+#scratch-p2p-panel button.sp2p-connect,
+#scratch-p2p-panel button.sp2p-leave {
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  padding: 4px 10px;
+  font: inherit;
+  font-weight: 600;
+  color: #11111b;
+  background: #89b4fa;
+}
+#scratch-p2p-panel button.sp2p-leave {
+  background: #f38ba8;
+}

@@ -1,0 +1,29 @@
+{
+  "name": "userscript",
+  "description": "TurboWarp Desktop userscript: scratch-mcp live-reload + real-time collaboration over a WebSocket relay. ES-module source bundled to a single IIFE.",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "license": "MPL-2.0",
+  "author": "playforge-coding",
+  "keywords": [
+    "scratch",
+    "turbowarp",
+    "userscript",
+    "collaboration",
+    "websocket"
+  ],
+  "scripts": {
+    "build": "rsbuild build",
+    "dev": "rsbuild build --watch",
+    "serve": "node server/server.mjs",
+    "install-userscript": "node scripts/install-userscript.mjs",
+    "deploy": "rsbuild build && node scripts/install-userscript.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "^1.5.0"
+  }
+}
