@@ -114,8 +114,13 @@ those headers on your dev server and host, or use a
 [`coi-serviceworker`](https://github.com/gzuidhof/coi-serviceworker) shim on a
 static host that can't set headers.
 
-## A complete app
+## Complete apps
 
-The [TurboWarp Extension Maker](/web-editor/extension-maker) is a full
-application built on `web-editor` — read it to see the framework wired up end to
-end (and try the live version).
+Two full applications are built on `web-editor` — read either to see the
+framework wired up end to end (and try the live versions):
+
+- **[dev-local](/web-editor/dev-local)** — a general-purpose in-browser code
+  editor (editor · terminal · live preview), with no domain-specific tooling.
+  The simplest end-to-end example.
+- **[TurboWarp Extension Maker](/web-editor/extension-maker)** — a domain-specific
+  IDE that adds an embedded Scratch VM, blocks editor, and stage on top.

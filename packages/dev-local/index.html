@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="dev-local — a general-purpose in-browser code editor: edit, run npm, build, and live-preview a project, all client-side."
+    />
+    <!--
+      Cross-origin isolation shim. On a static host (GitHub Pages) we can't set
+      COOP/COEP response headers, so this service worker re-serves the document
+      with them and reloads once — giving us `crossOriginIsolated === true`,
+      which WebContainers (and Monaco's workers under COEP) require. It's a
+      no-op in dev, where rsbuild already sets the headers. Must run first.
+    -->
+    <script src="./coi-serviceworker.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

@@ -165,6 +165,47 @@ export function createEditor(config) {
       }
     },
 
+    /**
+     * Replace the whole project with a new set of files (e.g. after a git clone
+     * or pull). Updates the store, then best-effort syncs the difference into the
+     * running container — adds/overwrites the new files and removes the ones that
+     * are gone — and rebuilds. New dependencies aren't auto-installed; run the
+     * package manager in the terminal if the project needs it.
+     *
+     * @param {Record<string,string>} nextFiles
+     * @param {{ entryFile?: string }} [opts]
+     */
+    async loadFiles(nextFiles, { entryFile } = {}) {
+      const prevPaths = Object.keys(store.get().files);
+      const active = entryFile ?? Object.keys(nextFiles)[0] ?? null;
+      store.set({
+        files: { ...nextFiles },
+        activeFile: active,
+        openFiles: active ? [active] : [],
+      });
+      for (const path of prevPaths) {
+        if (nextFiles[path] == null) {
+          try {
+            await engine.removeFile(path);
+          } catch {
+            /* not ready yet */
+          }
+        }
+      }
+      for (const [path, contents] of Object.entries(nextFiles)) {
+        try {
+          await engine.writeFile(path, contents);
+        } catch {
+          try {
+            await engine.addFile(path, contents);
+          } catch {
+            /* not ready yet */
+          }
+        }
+      }
+      if (store.get().autoBuild) actions.build();
+    },
+
     setAutoBuild(value) {
       store.set({ autoBuild: Boolean(value) });
     },
