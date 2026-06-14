@@ -50,7 +50,11 @@ function TreeNode({
               ) : (
                 <ChevronRight size={14} className="shrink-0" />
               )}
-              <img src={folderIcon()} alt="" className="h-4 w-4 shrink-0" />
+              <img
+                src={folderIcon()}
+                alt=""
+                className="h-[18px] w-[18px] shrink-0"
+              />
               <span className="truncate">{name}</span>
             </button>
             {open && (
@@ -78,7 +82,11 @@ function TreeNode({
             }`}
             style={{ paddingLeft: depth * 12 + 20 }}
           >
-            <img src={fileIcon(f.path)} alt="" className="h-4 w-4 shrink-0" />
+            <img
+              src={fileIcon(f.path)}
+              alt=""
+              className="h-[18px] w-[18px] shrink-0"
+            />
             <span className="truncate">{f.name}</span>
           </button>
           <button
