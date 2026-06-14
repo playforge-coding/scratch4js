@@ -31,26 +31,25 @@ const DEFAULT_CORS_PROXY = 'https://cors.isomorphic-git.org';
 // Promise. Its bundled `callWithOutput` helper predates that change and treats
 // the returned Promise as a numeric exit code (`if (0 !== promise) throw …`), so
 // *every* command throws `"[object Promise]: "`. We sidestep that helper by
-// supplying our own `print`/`printErr`/`quit` via `wasmGitModuleOverrides` (the
-// module only installs its broken helper when neither is set) and awaiting
-// `callMain` ourselves — see `run`. wasm-git is a single shared instance with one
-// working directory and all ops are serialized onto the engine queue, so these
-// module-level capture buffers are safe to share.
-const _stdout = [];
-const _stderr = [];
-let _exitCode = 0;
-let _overridesInstalled = false;
+// passing our own `print`/`printErr`/`quit` straight to the module factory (the
+// module only installs its broken helper when neither `print` nor `printErr` is
+// set), and awaiting `callMain` ourselves — see `run`. Output is captured into a
+// per-module buffer stashed on the module instance, so engines don't clobber
+// each other's output.
+const CAPTURE = Symbol('wasmGitCapture');
 
-function installModuleOverrides() {
-  if (_overridesInstalled) return;
-  _overridesInstalled = true;
-  globalThis.wasmGitModuleOverrides = {
-    print: (line) => _stdout.push(line),
-    printErr: (line) => _stderr.push(line),
-    // libgit2 exits through Emscripten's exit path; record the status instead of
-    // letting the default handler throw (mirrors wasm-git's own sync helper).
-    quit: (status) => {
-      _exitCode = status;
+function captureOverrides() {
+  const cap = { stdout: [], stderr: [], exitCode: 0 };
+  return {
+    cap,
+    overrides: {
+      print: (line) => cap.stdout.push(line),
+      printErr: (line) => cap.stderr.push(line),
+      // libgit2 exits through Emscripten's exit path; record the status instead
+      // of letting the default handler throw (mirrors wasm-git's sync helper).
+      quit: (status) => {
+        cap.exitCode = status;
+      },
     },
   };
 }
@@ -128,9 +127,12 @@ export class GitEngine {
   }
 
   async _boot() {
-    installModuleOverrides(); // must be set before the factory's Object.assign
     const factory = await loadFactory();
-    const lg = await factory();
+    // Pass output handlers straight into the module so wasm-git skips installing
+    // its (Promise-broken) `callWithOutput` helper. See note above CAPTURE.
+    const { cap, overrides } = captureOverrides();
+    const lg = await factory(overrides);
+    lg[CAPTURE] = cap;
     const FS = lg.FS;
 
     // libgit2 reads the committer identity from the global gitconfig.
@@ -344,32 +346,33 @@ export class GitEngine {
 /**
  * Run one git command. `callMain` is async in the wasm-git build we load, so it
  * must be awaited; stdout/stderr and the exit status are captured through the
- * module overrides installed in {@link installModuleOverrides}. Returns stdout
- * joined by newlines, and throws on a non-zero exit (message = stderr).
+ * per-module overrides set in {@link GitEngine#_boot} (see {@link captureOverrides}).
+ * Returns stdout joined by newlines, and throws on a non-zero exit (message = stderr).
  */
 async function run(lg, dir, args) {
   lg.FS.chdir(dir); // re-assert cwd before each call (WASMFS can reset it)
-  _stdout.length = 0;
-  _stderr.length = 0;
-  _exitCode = 0;
+  const cap = lg[CAPTURE];
+  cap.stdout.length = 0;
+  cap.stderr.length = 0;
+  cap.exitCode = 0;
   let caught;
   try {
     await lg.callMain(args);
   } catch (err) {
     caught = err;
   }
-  if (caught || _exitCode !== 0) {
-    const stderr = _stderr.join('\n').trim();
+  if (caught || cap.exitCode !== 0) {
+    const stderr = cap.stderr.join('\n').trim();
     const detail =
       stderr ||
       (caught && (typeof caught === 'string' ? caught : caught.message)) ||
-      `git command failed (exit ${_exitCode})`;
+      `git command failed (exit ${cap.exitCode})`;
     throw new Error(
       detail.replace(/^\d+:\s*/, '').trim() || 'git command failed',
       { cause: caught },
     );
   }
-  return _stdout.join('\n');
+  return cap.stdout.join('\n');
 }
 
 /** Promisified Emscripten `FS.syncfs`. populate=true loads from IndexedDB. */
