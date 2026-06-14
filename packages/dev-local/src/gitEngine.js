@@ -26,6 +26,35 @@
 const VENDOR_PATH = 'vendor/wasm-git/lg2_async.js';
 const DEFAULT_CORS_PROXY = 'https://cors.isomorphic-git.org';
 
+// The async wasm-git build wraps `callMain` to be async — it suspends the wasm
+// (via Asyncify) while network/XHR work happens, so `callMain` now returns a
+// Promise. Its bundled `callWithOutput` helper predates that change and treats
+// the returned Promise as a numeric exit code (`if (0 !== promise) throw …`), so
+// *every* command throws `"[object Promise]: "`. We sidestep that helper by
+// supplying our own `print`/`printErr`/`quit` via `wasmGitModuleOverrides` (the
+// module only installs its broken helper when neither is set) and awaiting
+// `callMain` ourselves — see `run`. wasm-git is a single shared instance with one
+// working directory and all ops are serialized onto the engine queue, so these
+// module-level capture buffers are safe to share.
+const _stdout = [];
+const _stderr = [];
+let _exitCode = 0;
+let _overridesInstalled = false;
+
+function installModuleOverrides() {
+  if (_overridesInstalled) return;
+  _overridesInstalled = true;
+  globalThis.wasmGitModuleOverrides = {
+    print: (line) => _stdout.push(line),
+    printErr: (line) => _stderr.push(line),
+    // libgit2 exits through Emscripten's exit path; record the status instead of
+    // letting the default handler throw (mirrors wasm-git's own sync helper).
+    quit: (status) => {
+      _exitCode = status;
+    },
+  };
+}
+
 let factoryPromise;
 function loadFactory() {
   if (!factoryPromise) {
@@ -99,6 +128,7 @@ export class GitEngine {
   }
 
   async _boot() {
+    installModuleOverrides(); // must be set before the factory's Object.assign
     const factory = await loadFactory();
     const lg = await factory();
     const FS = lg.FS;
@@ -194,7 +224,7 @@ export class GitEngine {
   /** `git init` the working tree, then mirror the current files into it. */
   async init(files) {
     return this._enqueue(async (lg) => {
-      run(lg, this.dir, ['init', '.']); // lg2's init requires an explicit dir
+      await run(lg, this.dir, ['init', '.']); // lg2's init requires an explicit dir
       writeFiles(lg.FS, this.dir, files);
       await this._persist(lg);
       return true;
@@ -207,12 +237,12 @@ export class GitEngine {
    * @returns {Promise<{initialized:boolean, branch:string|null, entries:Array}>}
    */
   async status(files) {
-    return this._enqueue((lg) => {
+    return this._enqueue(async (lg) => {
       writeFiles(lg.FS, this.dir, files);
       if (!pathExists(lg.FS, `${this.dir}/.git`))
         return { initialized: false, branch: null, entries: [] };
       const entries = parseStatus(
-        run(lg, this.dir, ['status', '--short', '--untracked-files=all']),
+        await run(lg, this.dir, ['status', '--short', '--untracked-files=all']),
       );
       return {
         initialized: true,
@@ -226,8 +256,8 @@ export class GitEngine {
   async commit(files, message) {
     return this._enqueue(async (lg) => {
       writeFiles(lg.FS, this.dir, files);
-      run(lg, this.dir, ['add', '.']);
-      const out = run(lg, this.dir, ['commit', '-m', message]);
+      await run(lg, this.dir, ['add', '.']);
+      const out = await run(lg, this.dir, ['commit', '-m', message]);
       await this._persist(lg);
       return out;
     });
@@ -235,10 +265,10 @@ export class GitEngine {
 
   /** Parsed `git log` for the current branch (empty before the first commit). */
   async log() {
-    return this._enqueue((lg) => {
+    return this._enqueue(async (lg) => {
       if (!pathExists(lg.FS, `${this.dir}/.git`)) return [];
       try {
-        return parseLog(run(lg, this.dir, ['log']));
+        return parseLog(await run(lg, this.dir, ['log']));
       } catch {
         return []; // unborn branch — no commits yet
       }
@@ -268,7 +298,7 @@ export class GitEngine {
   async clone(url) {
     return this._enqueue(async (lg) => {
       clearAll(lg.FS, this.dir); // clone requires an empty target
-      run(lg, this.dir, ['clone', url, '.']);
+      await run(lg, this.dir, ['clone', url, '.']);
       const files = readWorkTree(lg.FS, this.dir);
       await this._persist(lg);
       return files;
@@ -278,7 +308,7 @@ export class GitEngine {
   /** Fetch from origin (updates remote-tracking refs; no work-tree change). */
   async fetch() {
     return this._enqueue(async (lg) => {
-      run(lg, this.dir, ['fetch', 'origin']);
+      await run(lg, this.dir, ['fetch', 'origin']);
       await this._persist(lg);
       return true;
     });
@@ -288,8 +318,8 @@ export class GitEngine {
   async pull() {
     return this._enqueue(async (lg) => {
       const branch = currentBranch(lg, this.dir) || 'main';
-      run(lg, this.dir, ['fetch', 'origin']);
-      run(lg, this.dir, ['merge', `origin/${branch}`]);
+      await run(lg, this.dir, ['fetch', 'origin']);
+      await run(lg, this.dir, ['merge', `origin/${branch}`]);
       const files = readWorkTree(lg.FS, this.dir);
       await this._persist(lg);
       return files;
@@ -302,7 +332,7 @@ export class GitEngine {
     return this._enqueue(async (lg) => {
       const branch = currentBranch(lg, this.dir) || 'main';
       ensureRemote(lg.FS, this.dir, url, branch);
-      const out = run(lg, this.dir, ['push']);
+      const out = await run(lg, this.dir, ['push']);
       await this._persist(lg);
       return out;
     });
@@ -312,20 +342,34 @@ export class GitEngine {
 // ── wasm-git invocation ─────────────────────────────────────────────────────
 
 /**
- * Run one git command. wasm-git's `callWithOutput` captures stdout, returns it
- * joined by newlines, and throws `"<exitCode>: <stderr>"` on a non-zero exit.
+ * Run one git command. `callMain` is async in the wasm-git build we load, so it
+ * must be awaited; stdout/stderr and the exit status are captured through the
+ * module overrides installed in {@link installModuleOverrides}. Returns stdout
+ * joined by newlines, and throws on a non-zero exit (message = stderr).
  */
-function run(lg, dir, args) {
+async function run(lg, dir, args) {
   lg.FS.chdir(dir); // re-assert cwd before each call (WASMFS can reset it)
+  _stdout.length = 0;
+  _stderr.length = 0;
+  _exitCode = 0;
+  let caught;
   try {
-    return lg.callWithOutput(args) ?? '';
+    await lg.callMain(args);
   } catch (err) {
-    const msg = typeof err === 'string' ? err : (err?.message ?? String(err));
+    caught = err;
+  }
+  if (caught || _exitCode !== 0) {
+    const stderr = _stderr.join('\n').trim();
+    const detail =
+      stderr ||
+      (caught && (typeof caught === 'string' ? caught : caught.message)) ||
+      `git command failed (exit ${_exitCode})`;
     throw new Error(
-      msg.replace(/^\d+:\s*/, '').trim() || 'git command failed',
-      { cause: err },
+      detail.replace(/^\d+:\s*/, '').trim() || 'git command failed',
+      { cause: caught },
     );
   }
+  return _stdout.join('\n');
 }
 
 /** Promisified Emscripten `FS.syncfs`. populate=true loads from IndexedDB. */
