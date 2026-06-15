@@ -1,7 +1,7 @@
 {
   "name": "dev-local",
   "description": "A general-purpose in-browser code editor: edit a multi-file project in Monaco, run npm and a real shell in a WebContainer, build it, and live-preview the result. Built on the browser-ide-kit toolkit.",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "type": "module",
   "private": true,
   "license": "MPL-2.0",
