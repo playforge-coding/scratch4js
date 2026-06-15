@@ -1,7 +1,7 @@
 {
   "name": "web-editor",
   "description": "Reusable in-browser IDE building blocks: a resizable split-pane layout, Monaco editor, xterm terminal bound to a WebContainer, a Seti-iconed file tree, and Radix UI primitives. Framework for tools like tw-extension-maker.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "license": "MPL-2.0",
   "author": "playforge-coding",
