@@ -3,6 +3,9 @@
 *.local
 *.log*
 
+# Env
+.env
+
 # Dist
 node_modules
 dist/
