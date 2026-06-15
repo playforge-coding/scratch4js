@@ -110,27 +110,6 @@ importers:
         specifier: ^8.18.0
         version: 8.21.0
 
-  packages/git4sb3:
-    dependencies:
-      '@turbowarp/jszip':
-        specifier: ^3.12.0
-        version: 3.12.0
-      commander:
-        specifier: ^14.0.0
-        version: 14.0.3
-      diff:
-        specifier: ^7.0.0
-        version: 7.0.0
-      jsdom:
-        specifier: ^29.1.1
-        version: 29.1.1
-      parse-sb3-blocks:
-        specifier: ^0.5.2
-        version: 0.5.2
-      scratchblocks:
-        specifier: ^3.6.4
-        version: 3.6.4
-
   packages/s-api4js:
     dependencies:
       tough-cookie:
@@ -166,7 +145,7 @@ importers:
         version: 6.2.1
       scratch-vm:
         specifier: github:TurboWarp/scratch-vm#develop
-        version: https://codeload.github.com/TurboWarp/scratch-vm/tar.gz/43f13efd1883eeef8f82616faf69380ff75ab068(@turbowarp/scratch-svg-renderer@1.1.0(scratch-render-fonts@1.0.252))(webpack@5.107.2)
+        version: https://codeload.github.com/TurboWarp/scratch-vm/tar.gz/43f13efd1883eeef8f82616faf69380ff75ab068(@turbowarp/scratch-svg-renderer@1.1.0)(webpack@5.107.2)
       scratch4js:
         specifier: workspace:*
         version: link:../scratch4js
@@ -234,7 +213,7 @@ importers:
         version: https://codeload.github.com/TurboWarp/scratch-render/tar.gz/a67f7c9c07d459582c227d4fd3fae8f59d8fc9ce(webpack@5.107.2)
       scratch-vm:
         specifier: github:TurboWarp/scratch-vm#43f13efd1883eeef8f82616faf69380ff75ab068
-        version: https://codeload.github.com/TurboWarp/scratch-vm/tar.gz/43f13efd1883eeef8f82616faf69380ff75ab068(@turbowarp/scratch-svg-renderer@1.1.0(scratch-render-fonts@1.0.252))(webpack@5.107.2)
+        version: https://codeload.github.com/TurboWarp/scratch-vm/tar.gz/43f13efd1883eeef8f82616faf69380ff75ab068(@turbowarp/scratch-svg-renderer@1.1.0)(webpack@5.107.2)
     devDependencies:
       '@rsbuild/core':
         specifier: ^1.5.0
@@ -12125,7 +12104,7 @@ snapshots:
 
   scratch-translate-extension-languages@1.0.7: {}
 
-  scratch-vm@https://codeload.github.com/TurboWarp/scratch-vm/tar.gz/43f13efd1883eeef8f82616faf69380ff75ab068(@turbowarp/scratch-svg-renderer@1.1.0(scratch-render-fonts@1.0.252))(webpack@5.107.2):
+  scratch-vm@https://codeload.github.com/TurboWarp/scratch-vm/tar.gz/43f13efd1883eeef8f82616faf69380ff75ab068(@turbowarp/scratch-svg-renderer@1.1.0)(webpack@5.107.2):
     dependencies:
       '@turbowarp/json': 0.1.2
       '@turbowarp/jszip': 3.12.0

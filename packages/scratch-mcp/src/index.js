@@ -136,6 +136,18 @@ const spriteSummary = (s) => ({
   sounds: s.sounds.map((c) => c.name),
 });
 
+/** Build a plain summary of a workspace comment for tool output. */
+const commentSummary = (c) => ({
+  id: c.id,
+  text: c.text,
+  blockId: c.blockId,
+  x: c.x,
+  y: c.y,
+  width: c.width,
+  height: c.height,
+  minimized: c.minimized,
+});
+
 /** Wrap a value as an MCP text-content result. */
 const ok = (value) => ({
   content: [
@@ -901,6 +913,110 @@ tool(
     inputSchema: { name: z.string() },
   },
   ({ name }) => ({ id: openProject().stage.addBroadcast(name) }),
+);
+
+// --- Comments ---------------------------------------------------------------
+
+const commentBox = {
+  x: z.number().optional().describe('Canvas X position.'),
+  y: z.number().optional().describe('Canvas Y position.'),
+  width: z.number().optional().describe('Box width in pixels.'),
+  height: z.number().optional().describe('Box height in pixels.'),
+  minimized: z
+    .boolean()
+    .optional()
+    .describe('Whether the comment is collapsed to its title bar.'),
+};
+
+tool(
+  'list_comments',
+  {
+    title: 'List comments',
+    description:
+      "List a target's workspace comments — the yellow sticky notes shown in " +
+      'the editor. Each has an `id`, its `text`, and either a `blockId` (when ' +
+      'attached to a block) or `null` (when floating free on the canvas).',
+    inputSchema: { target: z.string().describe('Sprite name, or "Stage".') },
+  },
+  ({ target: t }) => target(t).comments.map(commentSummary),
+);
+
+tool(
+  'add_comment',
+  {
+    title: 'Add comment',
+    description:
+      'Add a workspace comment to a target. With no `blockId` the comment ' +
+      "floats free on the canvas; pass a `blockId` (a key in the target's " +
+      '`blocks` map — see `get_target_json`) to attach it to that block, which ' +
+      "also sets the block's `comment` back-reference so the editor anchors it.",
+    inputSchema: {
+      target: z.string().describe('Sprite name, or "Stage".'),
+      text: z.string().describe('The comment text.'),
+      blockId: z
+        .string()
+        .optional()
+        .describe('Block id to attach to. Omit for a free-floating comment.'),
+      ...commentBox,
+    },
+  },
+  ({ target: t, text, ...options }) =>
+    commentSummary(target(t).addComment(text, options)),
+);
+
+tool(
+  'set_comment',
+  {
+    title: 'Set comment',
+    description:
+      'Update an existing comment on a target by id: its `text`, position, ' +
+      'size, `minimized` state, or the `blockId` it is attached to (pass an ' +
+      'empty string or null to detach it). Only the fields you pass change.',
+    inputSchema: {
+      target: z.string().describe('Sprite name, or "Stage".'),
+      id: z.string().describe('The comment id (from `list_comments`).'),
+      text: z.string().optional().describe('New comment text.'),
+      blockId: z
+        .string()
+        .nullable()
+        .optional()
+        .describe('Block id to attach to, or null/"" to detach.'),
+      ...commentBox,
+    },
+  },
+  ({ target: t, id, ...props }) => {
+    const resolved = target(t);
+    const comment = resolved.getComment(id);
+    if (!comment) throw new Error(`No comment with id "${id}".`);
+    // Re-attaching changes which block points back at this comment; clear the
+    // old block's pointer and set the new one so the editor anchors it right.
+    if (props.blockId !== undefined) {
+      const next = props.blockId === '' ? null : props.blockId;
+      const blocks = resolved.json.blocks ?? {};
+      if (comment.blockId && blocks[comment.blockId]?.comment === id)
+        delete blocks[comment.blockId].comment;
+      if (next && blocks[next]) blocks[next].comment = id;
+      comment.blockId = next;
+    }
+    for (const key of ['text', 'x', 'y', 'width', 'height', 'minimized'])
+      if (props[key] !== undefined) comment[key] = props[key];
+    return commentSummary(comment);
+  },
+);
+
+tool(
+  'remove_comment',
+  {
+    title: 'Remove comment',
+    description:
+      'Delete a workspace comment from a target by id. If it was attached to a ' +
+      "block, the block's `comment` back-reference is cleared too.",
+    inputSchema: {
+      target: z.string().describe('Sprite name, or "Stage".'),
+      id: z.string().describe('The comment id (from `list_comments`).'),
+    },
+  },
+  ({ target: t, id }) => ({ removed: target(t).removeComment(id) }),
 );
 
 // --- Costumes & sounds ------------------------------------------------------

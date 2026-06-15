@@ -1,4 +1,5 @@
 import { Costume, Sound } from './assets.js';
+import { Comment } from './comment.js';
 import { sniffFormat } from './format.js';
 import { md5 } from './md5.js';
 import { uid } from './ids.js';
@@ -291,6 +292,77 @@ export class Target {
       }
     }
     return false;
+  }
+
+  // --- Comments -------------------------------------------------------------
+
+  /** @returns {Comment[]} The target's workspace comments. */
+  get comments() {
+    return Object.entries(this.json.comments ?? {}).map(
+      ([id, entry]) => new Comment(id, entry),
+    );
+  }
+
+  /**
+   * Find a comment by id.
+   *
+   * @param {string} id
+   * @returns {Comment | undefined}
+   */
+  getComment(id) {
+    const entry = this.json.comments?.[id];
+    return entry ? new Comment(id, entry) : undefined;
+  }
+
+  /**
+   * Add a workspace comment. With no `blockId` the comment floats free on the
+   * canvas; pass a `blockId` to attach it to one of this target's blocks (the
+   * block's `comment` pointer is updated to match).
+   *
+   * @param {string} text - The comment's text.
+   * @param {object} [options]
+   * @param {string | null} [options.blockId] - Block to attach to (default none).
+   * @param {number} [options.x] - Canvas X (default 0).
+   * @param {number} [options.y] - Canvas Y (default 0).
+   * @param {number} [options.width] - Box width (default 200).
+   * @param {number} [options.height] - Box height (default 200).
+   * @param {boolean} [options.minimized] - Start collapsed (default false).
+   * @returns {Comment} The newly added comment.
+   */
+  addComment(text, options = {}) {
+    if (!this.json.comments) this.json.comments = {};
+    const id = uid();
+    const blockId = options.blockId ?? null;
+    this.json.comments[id] = {
+      blockId,
+      x: options.x ?? 0,
+      y: options.y ?? 0,
+      width: options.width ?? 200,
+      height: options.height ?? 200,
+      minimized: options.minimized ?? false,
+      text: String(text),
+    };
+    // Keep the block → comment back-reference in sync so the editor renders the
+    // comment anchored to its block.
+    if (blockId && this.json.blocks?.[blockId])
+      this.json.blocks[blockId].comment = id;
+    return new Comment(id, this.json.comments[id]);
+  }
+
+  /**
+   * Remove a comment by id.
+   *
+   * @param {string} id
+   * @returns {boolean} True if a comment was removed.
+   */
+  removeComment(id) {
+    const entry = this.json.comments?.[id];
+    if (!entry) return false;
+    delete this.json.comments[id];
+    // Clear the dangling back-reference on the block it was attached to.
+    if (entry.blockId && this.json.blocks?.[entry.blockId]?.comment === id)
+      delete this.json.blocks[entry.blockId].comment;
+    return true;
   }
 
   /**

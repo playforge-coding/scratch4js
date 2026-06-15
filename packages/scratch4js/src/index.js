@@ -9,6 +9,7 @@
 export { Project } from './project.js';
 export { Target, Stage, Sprite } from './target.js';
 export { Costume, Sound } from './assets.js';
+export { Comment } from './comment.js';
 export { md5 } from './md5.js';
 export { uid } from './ids.js';
 export { sniffFormat } from './format.js';
