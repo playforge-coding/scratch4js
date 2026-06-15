@@ -135,15 +135,29 @@ Each takes `{ mode?, language?, limit?, offset? }`, where `mode` is `'popular'`
 
 ## `session.cloud(projectId, options?)`
 
-Returns a [`Cloud`](#cloud) (requires login). `options` overrides the defaults:
+Returns a [`Cloud`](#cloud). For Scratch (the default host) this requires login
+and attaches the session cookie; pass a custom `host` and it's treated as
+**unauthenticated** (no login, no cookie). `options` overrides the defaults:
 
-| Option            | Default                           | Purpose                                  |
-| ----------------- | --------------------------------- | ---------------------------------------- |
-| `host`            | `wss://clouddata.scratch.mit.edu` | Cloud WebSocket URL (set for TurboWarp). |
-| `allowNonNumeric` | `false`                           | Permit non-numeric values.               |
-| `lengthLimit`     | `256`                             | Max value length.                        |
-| `rateLimit`       | `0.1`                             | Minimum seconds between sets.            |
-| `WebSocket`       | `ws`, then `globalThis.WebSocket` | WebSocket implementation.                |
+| Option            | Default                           | Purpose                                   |
+| ----------------- | --------------------------------- | ----------------------------------------- |
+| `host`            | `wss://clouddata.scratch.mit.edu` | Cloud WebSocket URL (custom/TurboWarp).   |
+| `allowNonNumeric` | `false`                           | Permit non-numeric values.                |
+| `lengthLimit`     | `256`                             | Max value length.                         |
+| `rateLimit`       | `0.1`                             | Minimum seconds between sets.             |
+| `userAgent`       | session UA                        | `User-Agent` header (e.g. for TurboWarp). |
+| `cookie`          | session cookie (Scratch only)     | `Cookie` header.                          |
+| `WebSocket`       | `ws`, then `globalThis.WebSocket` | WebSocket implementation.                 |
+
+Other ways to construct one, no session needed:
+
+```js
+Cloud.turbowarp(projectId, { purpose?, contact?, userAgent?, ... }) // TurboWarp preset
+new Cloud({ projectId, host, ... }) // any server
+```
+
+Constants: `Cloud.SCRATCH_HOST`, `Cloud.TURBOWARP_HOST`. The `Cloud.isScratch`
+getter reports whether a connection targets Scratch.
 
 ### `Cloud`
 
@@ -174,15 +188,18 @@ The handler `ctx` is `{ name, args, requestId, requester }`.
 
 ### `CloudEvents`
 
-Built with `cloud.events({ interval?, limit? })` — polls the public log, so it
-works **without login** and reports the acting user and `create`/`delete`.
+Built with `cloud.events({ source?, interval?, limit? })`. `source` is `'logs'`
+(Scratch — polls the public log, reports the user and `create`/`delete`, works
+without login) or `'websocket'` (TurboWarp/custom — listens on the socket; only
+`set` fires). It defaults to `logs` on Scratch and `websocket` elsewhere.
 
 | Method               | Description                                          |
 | -------------------- | ---------------------------------------------------- |
 | `on(event, fn)`      | Events: `ready`, `set`, `create`, `delete`, `error`. |
-| `start()` / `stop()` | Seed the cursor and begin / stop polling.            |
+| `start()` / `stop()` | Begin / stop emitting events.                        |
 
-Activity events receive `{ user, verb, name, value, timestamp }`.
+Activity events receive `{ user, verb, name, value, timestamp }` (`user` and
+`timestamp` are `null` in `websocket` mode).
 
 ### `CloudStorage`
 

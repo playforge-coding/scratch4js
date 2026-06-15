@@ -123,10 +123,29 @@ events.on('create', (a) => console.log(`${a.user} created ${a.name}`));
 await events.start();
 ```
 
+**TurboWarp & custom servers** — everything above (variables, requests, storage,
+events) works against any cloud server, not just Scratch's. TurboWarp's needs no
+login:
+
+```js
+import { Cloud } from 's-api4js';
+
+// No session required. Strings and long values are allowed here.
+const cloud = Cloud.turbowarp(123456789, { contact: 'you@example.com' });
+await cloud.setVar('message', 'hello');
+cloud.requests().request('add', ([a, b]) => Number(a) + Number(b));
+
+// Any other server:
+const custom = new Cloud({ projectId: 1, host: 'wss://my.cloud.example' });
+```
+
+`cloud.events()` automatically listens on the WebSocket for servers without a
+log API (TurboWarp/custom) and polls the log on Scratch. `cloud.logs()` is
+Scratch-only.
+
 Connecting to Scratch's cloud requires login and the [`ws`](https://github.com/websockets/ws)
 package (a dependency). Reading the public log — `cloud.logs()` / `cloud.events()`
-— does not. Point `cloud` at a TurboWarp project with
-`session.cloud(id, { host: 'wss://clouddata.turbowarp.org' })`.
+— does not.
 
 ## API
 
@@ -172,10 +191,14 @@ and the shortcuts `setTitle`, `setInstructions`, `setDescription`.
 `exploreStudios(q?, opts?)`. `opts` is
 `{ mode?: 'trending' | 'popular', language?, limit?, offset? }`.
 
-### `session.cloud(projectId, options?)`
+### `session.cloud(projectId, options?)` · `Cloud.turbowarp(projectId, options?)` · `new Cloud(options)`
 
-Returns a `Cloud` (requires login). `options` overrides the defaults, e.g.
-`{ host, allowNonNumeric, lengthLimit, rateLimit, WebSocket }`.
+`session.cloud` returns a `Cloud` for Scratch (requires login), unless you pass a
+custom `options.host` (then no login/cookie). `Cloud.turbowarp(id, { purpose?,
+contact?, … })` is a logged-out TurboWarp preset; `new Cloud({ projectId, host,
+… })` targets any server. `options`: `{ host, allowNonNumeric, lengthLimit,
+rateLimit, userAgent, cookie, WebSocket }`. Constants: `Cloud.SCRATCH_HOST`,
+`Cloud.TURBOWARP_HOST`.
 
 `Cloud`: `connect()`, `disconnect()`, `reconnect()`, `setVar(name, value)`,
 `setVars({ … })`, `getVar(name)`, `getAllVars()`, `logs({ variable?, limit?, offset? })`,
@@ -186,7 +209,8 @@ and the builders `requests(options?)`, `events(options?)`, `storage(options?)`.
 `stop()`, `on(event, fn)` (`request`, `unknownRequest`, `error`).
 
 `CloudEvents`: `on(event, fn)` (`ready`, `set`, `create`, `delete`, `error`),
-`start()`, `stop()`.
+`start()`, `stop()`. `events({ source })` — `source` is `'logs'` (Scratch) or
+`'websocket'` (TurboWarp/custom); it's auto-selected by default.
 
 `CloudStorage`: `addDatabase(db)`, `getDatabase(name)`, `start()`, `stop()`,
 `on(event, fn)`. Databases: `MemoryDatabase`, `JsonDatabase`, `SqlDatabase`

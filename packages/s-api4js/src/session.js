@@ -232,9 +232,13 @@ export class ScratchSession {
   // ---- Cloud variables ----------------------------------------------------
 
   /**
-   * Open a {@link Cloud} for a project's cloud variables, pre-filled with this
-   * session's auth (cookie, username, origin) so it can connect and set
-   * variables. Connecting to Scratch's cloud requires login.
+   * Open a {@link Cloud} for a project's cloud variables.
+   *
+   * For Scratch's own cloud (the default) this requires login and pre-fills the
+   * session's auth (cookie, username, origin). For a **custom host** — pass
+   * `options.host` — no login is required and no Scratch cookie is attached, so
+   * this works on a logged-out session too. For TurboWarp specifically, the
+   * {@link Cloud.turbowarp} factory is more convenient.
    *
    * Call {@link Cloud#connect} before use, or just `await cloud.setVar(...)`
    * (the first set connects automatically). Build a request/response server with
@@ -245,27 +249,32 @@ export class ScratchSession {
    * await cloud.setVar('score', 100);
    *
    * @example
-   * const requests = session.cloud(123456789).requests();
-   * requests.request('add', ([a, b]) => Number(a) + Number(b));
-   * await requests.start();
+   * // A custom, unauthenticated cloud server:
+   * const cloud = session.cloud(123456789, { host: 'wss://my.cloud.example' });
    *
    * @param {number | string} projectId
    * @param {Partial<ConstructorParameters<typeof Cloud>[0]>} [options] - Overrides
-   *   (e.g. `host` for a TurboWarp cloud, or a custom `WebSocket`).
+   *   (e.g. `host` for a custom/TurboWarp cloud, or a custom `WebSocket`).
    * @returns {Cloud}
    */
   cloud(projectId, options = {}) {
-    this.requireAuth();
-    const sessionId = this._cookieValue('scratchsessionsid');
-    return new Cloud({
+    /** @type {Partial<ConstructorParameters<typeof Cloud>[0]>} */
+    const base = {
       projectId,
-      username: this.username ?? undefined,
-      cookie: sessionId ? `scratchsessionsid=${sessionId};` : undefined,
-      origin: this.siteHost,
       userAgent: this._http.userAgent,
       fetch: this._http._fetch,
-      ...options,
-    });
+    };
+    // Scratch's cloud (the default host) needs the session cookie + login; a
+    // custom host is treated as unauthenticated unless the caller says otherwise.
+    const isScratch = !options.host || options.host === Cloud.SCRATCH_HOST;
+    if (isScratch) {
+      this.requireAuth();
+      const sessionId = this._cookieValue('scratchsessionsid');
+      base.username = this.username ?? undefined;
+      base.cookie = sessionId ? `scratchsessionsid=${sessionId};` : undefined;
+      base.origin = this.siteHost;
+    }
+    return new Cloud({ ...base, ...options });
   }
 
   // ---- Internal plumbing (used by the resource classes) -------------------

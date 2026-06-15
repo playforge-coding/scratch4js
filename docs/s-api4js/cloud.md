@@ -64,15 +64,33 @@ const recent = await cloud.logs({ limit: 25 });
 const justScore = await cloud.logs({ variable: 'score' });
 ```
 
-### TurboWarp clouds
+### TurboWarp & custom servers
 
-Point the connection at a different cloud host:
+Everything on this page — variables, requests, storage and events — works
+against any cloud server, not only Scratch's. There are three ways to connect:
 
 ```js
-const cloud = session.cloud(123456789, {
-  host: 'wss://clouddata.turbowarp.org',
-});
+import { ScratchSession, Cloud } from 's-api4js';
+
+// 1. Scratch (the default) — needs login.
+const a = (await ScratchSession.login(user, pass)).cloud(123456789);
+
+// 2. TurboWarp — no login. Allows strings and long values, no rate limit.
+//    Pass a purpose/contact so the server can identify your connection.
+const b = Cloud.turbowarp(123456789, { contact: 'you@example.com' });
+
+// 3. Any custom server.
+const c = new Cloud({ projectId: 1, host: 'wss://my.cloud.example' });
 ```
+
+A logged-out session can open a non-Scratch host too:
+`new ScratchSession().cloud(id, { host: 'wss://…' })` skips the login check and
+sends no Scratch cookie.
+
+Two differences off Scratch: values may be non-numeric and far longer (TurboWarp
+allows up to 100 000 chars), and there's no log API — so `cloud.logs()` is
+Scratch-only and [`cloud.events()`](#cloud-events) listens on the WebSocket
+instead of polling.
 
 ## Cloud requests
 
@@ -217,9 +235,17 @@ await events.start();
 fires. Each activity event receives `{ user, verb, name, value, timestamp }`.
 `interval` is the poll period in seconds (default `1`).
 
-For instant, in-process change notifications on a connected socket, use the
-`set` event on the [connection](#setting-and-reading-variables) instead — it's
-immediate, but logged-in only and without the acting user.
+`cloud.events()` has two sources, auto-selected by host:
+
+- **`logs`** (default on Scratch) — the log-polling above; reports the user and
+  `create`/`delete`.
+- **`websocket`** (default on TurboWarp/custom servers, which have no log API) —
+  listens on the live connection. Instant, but only `set` fires, with no user or
+  timestamp.
+
+Override with `cloud.events({ source: 'websocket' })`. For one-off change
+notifications you can also use the `set` event on the
+[connection](#setting-and-reading-variables) directly.
 
 ## Encoding {#encoding}
 

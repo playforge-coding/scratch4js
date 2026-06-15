@@ -8,28 +8,86 @@ const CLOUD_PREFIX = '☁ ';
 
 const SCRATCH_CLOUD_HOST = 'wss://clouddata.scratch.mit.edu';
 const SCRATCH_LOGS_HOST = 'https://clouddata.scratch.mit.edu';
+const TURBOWARP_CLOUD_HOST = 'wss://clouddata.turbowarp.org';
 
 /**
- * A live connection to a project's cloud variables over Scratch's cloud-data
- * WebSocket (the same protocol the Scratch player uses). Set and read `☁`
- * variables, listen for changes, or build a {@link CloudRequests} server on top.
+ * A live connection to a project's cloud variables over a cloud-data WebSocket
+ * (the same protocol the Scratch player uses). Set and read `☁` variables,
+ * listen for changes, or build a {@link CloudRequests} server on top.
  *
- * Create one from a logged-in session — `session.cloud(projectId)` — which fills
- * in the auth cookie, username and origin for you. Connecting to Scratch's cloud
- * requires login; reading the public {@link Cloud#logs logs} does not.
+ * Works with three kinds of server:
+ *
+ * - **Scratch** — `session.cloud(projectId)` fills in the auth cookie, username
+ *   and origin. Connecting requires login; reading the {@link Cloud#logs logs}
+ *   does not.
+ * - **TurboWarp** — {@link Cloud.turbowarp} needs no login (and allows longer,
+ *   non-numeric values with no rate limit).
+ * - **Any custom server** — `new Cloud({ projectId, host: 'wss://…' })` with
+ *   whatever `cookie` / `userAgent` / limits it needs.
+ *
+ * Everything built on a `Cloud` — {@link Cloud#requests requests},
+ * {@link Cloud#storage storage} and {@link Cloud#events events} — works on all
+ * three.
  *
  * Values are limited to {@link Cloud#lengthLimit} characters and, unless
- * {@link Cloud#allowNonNumeric} is set, must be numeric — that's a Scratch rule,
- * not ours.
+ * {@link Cloud#allowNonNumeric} is set, must be numeric — that's a Scratch rule.
  *
  * @example
+ * // Scratch (authenticated)
  * const session = await ScratchSession.login('user', 'pass');
  * const cloud = session.cloud(123456789);
- * await cloud.connect();
- * cloud.on('set', ({ name, value }) => console.log(name, '=', value));
  * await cloud.setVar('score', 100);
+ *
+ * @example
+ * // TurboWarp (no login)
+ * const cloud = Cloud.turbowarp(123456789, { contact: 'me@example.com' });
+ * cloud.on('set', ({ name, value }) => console.log(name, '=', value));
+ * await cloud.setVar('message', 'hello'); // strings are allowed here
  */
 export class Cloud {
+  /** WebSocket URL of Scratch's cloud server. */
+  static SCRATCH_HOST = SCRATCH_CLOUD_HOST;
+  /** WebSocket URL of TurboWarp's (unauthenticated) cloud server. */
+  static TURBOWARP_HOST = TURBOWARP_CLOUD_HOST;
+
+  /**
+   * Open an **unauthenticated** connection to TurboWarp's cloud server. No login
+   * is needed; values may be non-numeric and up to 100 000 chars, and there's no
+   * rate limit. TurboWarp asks connections to identify themselves, so pass a
+   * `purpose` and/or `contact` (folded into the `User-Agent`) or a full
+   * `userAgent`.
+   *
+   * @param {number | string} projectId
+   * @param {object} [options]
+   * @param {string} [options.purpose] - Short note on what the connection is for.
+   * @param {string} [options.contact] - How to reach you (e.g. an email).
+   * @param {Partial<ConstructorParameters<typeof Cloud>[0]>} [options] - Plus any
+   *   {@link Cloud} option (`userAgent`, `WebSocket`, `lengthLimit`, …).
+   * @returns {Cloud}
+   */
+  static turbowarp(
+    projectId,
+    { purpose, contact, userAgent, ...options } = {},
+  ) {
+    let agent = userAgent;
+    if (!agent) {
+      const note =
+        purpose || contact
+          ? ` (Purpose:${purpose ?? ''}; Contact:${contact ?? ''})`
+          : '';
+      agent = `s-api4js${note}`;
+    }
+    return new Cloud({
+      projectId,
+      host: TURBOWARP_CLOUD_HOST,
+      userAgent: agent,
+      allowNonNumeric: true,
+      lengthLimit: 100000,
+      rateLimit: 0,
+      ...options,
+    });
+  }
+
   /**
    * @param {object} options
    * @param {number | string} options.projectId - The project whose cloud to join.
@@ -100,6 +158,17 @@ export class Cloud {
     /** Tail of the send queue — serializes sends and applies the rate limit. */
     this._sendChain = Promise.resolve();
     this._lastSent = 0;
+  }
+
+  /**
+   * Whether this connects to Scratch's own cloud server (vs. TurboWarp or a
+   * custom host). Used to decide defaults — e.g. only Scratch offers a log API,
+   * so {@link Cloud#events} polls logs there and listens to the socket elsewhere.
+   *
+   * @type {boolean}
+   */
+  get isScratch() {
+    return this.host === SCRATCH_CLOUD_HOST;
   }
 
   // ---- Events -------------------------------------------------------------
@@ -299,7 +368,10 @@ export class Cloud {
   }
 
   /**
-   * Read the project's public cloud-data activity log (no login required).
+   * Read the project's public cloud-data activity log (no login required). Only
+   * Scratch exposes this; TurboWarp and most custom servers don't, so use
+   * {@link Cloud#events} (which listens on the socket) there instead — or set a
+   * custom `logsHost` if your server has a compatible endpoint.
    *
    * @param {object} [options]
    * @param {string} [options.variable] - Only return activity for this variable.
@@ -310,6 +382,12 @@ export class Cloud {
   async logs({ variable, limit = 100, offset = 0 } = {}) {
     if (typeof this._fetch !== 'function') {
       throw new ScratchAPIError('No fetch available to read cloud logs.');
+    }
+    if (!this.isScratch && this.logsHost === SCRATCH_LOGS_HOST) {
+      throw new ScratchAPIError(
+        `This cloud server (${this.host}) has no log API. ` +
+          'Use cloud.events() for live activity, or pass a custom `logsHost`.',
+      );
     }
     const url = `${this.logsHost}/logs?projectid=${encodeURIComponent(
       this.projectId,
@@ -424,9 +502,10 @@ export class Cloud {
   }
 
   /**
-   * Watch this project's cloud activity by polling its public log. Reports the
-   * acting user, exact timestamp and `create`/`delete` events — and works
-   * without login (the WebSocket `set` events don't carry the user).
+   * Watch this project's cloud activity. By default this polls the public log on
+   * Scratch (reporting the acting user, exact timestamp and `create`/`delete`,
+   * and working without login) and listens on the WebSocket everywhere else
+   * (TurboWarp/custom servers have no log API). Override with `{ source }`.
    *
    * @param {ConstructorParameters<typeof CloudEvents>[1]} [options]
    * @returns {CloudEvents}

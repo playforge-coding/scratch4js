@@ -2,14 +2,18 @@
 const CLOUD_PREFIX = '☁ ';
 
 /**
- * Polls a project's public cloud-data log and emits an event for each new
- * activity. Unlike the WebSocket `set` events on {@link import('./cloud.js').Cloud},
- * this works **without login** and reports the acting user, the exact server
- * timestamp, and variable creation/deletion (`create`/`delete`) — none of which
- * the live socket carries. The trade-off is latency: changes surface on the next
- * poll, not instantly.
+ * Emits an event for each new cloud activity, from one of two sources:
  *
- * Build one with `cloud.events()`.
+ * - **`logs`** (Scratch only) — polls the public cloud-data log. Works
+ *   **without login** and reports the acting user, the exact server timestamp,
+ *   and variable creation/deletion (`create`/`delete`). The trade-off is
+ *   latency: changes surface on the next poll.
+ * - **`websocket`** (TurboWarp / custom servers, which have no log API) —
+ *   listens on the live connection. Instant, but only `set` fires and there's
+ *   no acting user or server timestamp.
+ *
+ * The source defaults to `logs` on Scratch and `websocket` elsewhere. Build one
+ * with `cloud.events()`.
  *
  * @example
  * const events = new Cloud({ projectId: 123456789 }).events();
@@ -21,12 +25,16 @@ export class CloudEvents {
   /**
    * @param {import('./cloud.js').Cloud} cloud
    * @param {object} [options]
+   * @param {'logs' | 'websocket'} [options.source] - Where activity comes from
+   *   (default: `logs` on Scratch, `websocket` elsewhere).
    * @param {number} [options.interval] - Seconds between log polls (default 1).
    * @param {number} [options.limit] - Rows fetched per poll (default 25).
    */
-  constructor(cloud, { interval = 1, limit = 25 } = {}) {
+  constructor(cloud, { source, interval = 1, limit = 25 } = {}) {
     /** @type {import('./cloud.js').Cloud} */
     this.cloud = cloud;
+    /** @type {'logs' | 'websocket'} */
+    this.source = source ?? (cloud.isScratch ? 'logs' : 'websocket');
     /** @type {number} */
     this.interval = interval;
     /** @type {number} */
@@ -38,6 +46,7 @@ export class CloudEvents {
     this._listeners = new Map();
     this._lastTimestamp = 0;
     this._timer = null;
+    this._wsHandler = null;
   }
 
   /**
@@ -73,14 +82,32 @@ export class CloudEvents {
   }
 
   /**
-   * Seed the cursor from the current log (so only *future* activity fires),
-   * emit `ready`, and begin polling. Resolves once polling has started.
+   * Begin emitting events, then resolve. In `logs` mode this seeds the cursor
+   * from the current log (so only *future* activity fires) and starts polling;
+   * in `websocket` mode it subscribes to the live connection (connecting it if
+   * needed). Either way `ready` fires once listening.
    *
    * @returns {Promise<this>}
    */
   async start() {
     if (this.running) return this;
     this.running = true;
+
+    if (this.source === 'websocket') {
+      this._wsHandler = ({ name, value, user }) =>
+        this._emit('set', {
+          user: user ?? null,
+          verb: 'set_var',
+          name,
+          value,
+          timestamp: null,
+        });
+      this.cloud.on('set', this._wsHandler);
+      if (!this.cloud.connected) await this.cloud.connect();
+      this._emit('ready');
+      return this;
+    }
+
     try {
       const logs = await this.cloud.logs({ limit: this.limit });
       if (logs.length > 0) this._lastTimestamp = logs[0].timestamp;
@@ -92,9 +119,13 @@ export class CloudEvents {
     return this;
   }
 
-  /** Stop polling. */
+  /** Stop emitting events. */
   stop() {
     this.running = false;
+    if (this._wsHandler) {
+      this.cloud.off('set', this._wsHandler);
+      this._wsHandler = null;
+    }
     if (this._timer) clearTimeout(this._timer);
     this._timer = null;
   }
