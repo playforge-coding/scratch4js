@@ -11,7 +11,7 @@ import {
   TerminalPanel,
   Tooltip,
   TooltipProvider,
-} from 'web-editor';
+} from 'browser-ide-kit';
 
 import { saveProject } from '../db.js';
 import { createMakerEditor } from '../makerEditor.js';

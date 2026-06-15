@@ -54,6 +54,9 @@ importers:
 
   packages/dev-local:
     dependencies:
+      browser-ide-kit:
+        specifier: workspace:*
+        version: link:../web-editor
       lucide-react:
         specifier: ^0.474.0
         version: 0.474.0(react@19.2.7)
@@ -66,9 +69,6 @@ importers:
       wasm-git:
         specifier: ^0.0.14
         version: 0.0.14
-      web-editor:
-        specifier: workspace:*
-        version: link:../web-editor
     devDependencies:
       '@rsbuild/core':
         specifier: ^1.5.0
@@ -163,6 +163,9 @@ importers:
       '@turbowarp/scratch-svg-renderer':
         specifier: ^1.1.0
         version: 1.1.0(scratch-render-fonts@1.0.252)
+      browser-ide-kit:
+        specifier: workspace:*
+        version: link:../web-editor
       create-tw-extension:
         specifier: workspace:*
         version: link:../create-tw-extension
@@ -187,9 +190,6 @@ importers:
       scratch-vm:
         specifier: github:TurboWarp/scratch-vm#43f13efd1883eeef8f82616faf69380ff75ab068
         version: https://codeload.github.com/TurboWarp/scratch-vm/tar.gz/43f13efd1883eeef8f82616faf69380ff75ab068(@turbowarp/scratch-svg-renderer@1.1.0)(webpack@5.107.2)
-      web-editor:
-        specifier: workspace:*
-        version: link:../web-editor
     devDependencies:
       '@rsbuild/core':
         specifier: ^1.5.0

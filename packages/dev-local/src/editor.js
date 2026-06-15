@@ -1,4 +1,4 @@
-import { createEditor } from 'web-editor';
+import { createEditor } from 'browser-ide-kit';
 
 /**
  * Create the web-editor instance that backs one project. It boots a

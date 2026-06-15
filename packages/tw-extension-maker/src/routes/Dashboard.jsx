@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Boxes, Package, Plus, Trash2 } from 'lucide-react';
-import { Button } from 'web-editor';
+import { Button } from 'browser-ide-kit';
 
 import { deleteProject, listProjects, newId, saveProject } from '../db.js';
 import { navigate } from '../router.js';

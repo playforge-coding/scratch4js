@@ -19,7 +19,7 @@ import {
   Tooltip,
   useEditorApi,
   useEditorState,
-} from 'web-editor';
+} from 'browser-ide-kit';
 
 // Short-status code → a small colored badge letter, à la VS Code's Source Control.
 const BADGE = {

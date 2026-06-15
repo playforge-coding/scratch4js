@@ -5,7 +5,7 @@ import {
   Tooltip,
   useEditorApi,
   useEditorState,
-} from 'web-editor';
+} from 'browser-ide-kit';
 
 /**
  * Live preview of the built project. The engine reads the build's single output

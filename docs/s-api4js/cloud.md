@@ -75,8 +75,8 @@ import { ScratchSession, Cloud } from 's-api4js';
 // 1. Scratch (the default) — needs login.
 const a = (await ScratchSession.login(user, pass)).cloud(123456789);
 
-// 2. TurboWarp — no login. Allows strings and long values, no rate limit.
-//    Pass a purpose/contact so the server can identify your connection.
+// 2. TurboWarp — no login. Numeric-only like Scratch, just a far larger
+//    length cap (100 000 chars). Pass a purpose/contact to identify yourself.
 const b = Cloud.turbowarp(123456789, { contact: 'you@example.com' });
 
 // 3. Any custom server.
@@ -87,10 +87,10 @@ A logged-out session can open a non-Scratch host too:
 `new ScratchSession().cloud(id, { host: 'wss://…' })` skips the login check and
 sends no Scratch cookie.
 
-Two differences off Scratch: values may be non-numeric and far longer (TurboWarp
-allows up to 100 000 chars), and there's no log API — so `cloud.logs()` is
-Scratch-only and [`cloud.events()`](#cloud-events) listens on the WebSocket
-instead of polling.
+Two differences off Scratch: values can be far longer — TurboWarp raises the cap
+to 100 000 chars (Scratch's is 256), though both servers still accept numbers
+only — and there's no log API, so `cloud.logs()` is Scratch-only and
+[`cloud.events()`](#cloud-events) listens on the WebSocket instead of polling.
 
 ## Cloud requests
 

@@ -15,7 +15,7 @@ import {
   Tooltip,
   useEditorApi,
   useEditorState,
-} from 'web-editor';
+} from 'browser-ide-kit';
 
 import { turbowarpExtensionUrl } from '../lib/turbowarp.js';
 import { navigate } from '../router.js';

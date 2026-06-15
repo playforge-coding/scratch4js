@@ -1,6 +1,6 @@
 {
   "name": "dev-local",
-  "description": "A general-purpose in-browser code editor: edit a multi-file project in Monaco, run npm and a real shell in a WebContainer, build it, and live-preview the result. Built on the web-editor toolkit.",
+  "description": "A general-purpose in-browser code editor: edit a multi-file project in Monaco, run npm and a real shell in a WebContainer, build it, and live-preview the result. Built on the browser-ide-kit toolkit.",
   "version": "1.2.2",
   "type": "module",
   "private": true,
@@ -19,7 +19,7 @@
     "webcontainer",
     "xterm",
     "playground",
-    "web-editor"
+    "browser-ide-kit"
   ],
   "scripts": {
     "dev": "rsbuild dev",
@@ -38,6 +38,6 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "wasm-git": "^0.0.14",
-    "web-editor": "workspace:*"
+    "browser-ide-kit": "workspace:*"
   }
 }

@@ -29,7 +29,7 @@ It gives you:
 ## Install
 
 ```sh
-npm install web-editor
+npm install browser-ide-kit
 # peer deps you provide:
 npm install react react-dom
 ```
@@ -52,8 +52,8 @@ import {
   FileTree,
   CodeEditor,
   TerminalPanel,
-} from 'web-editor';
-import 'web-editor/styles.css';
+} from 'browser-ide-kit';
+import 'browser-ide-kit/styles.css';
 
 const editor = createEditor({
   name: 'My Project',
@@ -97,12 +97,12 @@ the built output).
 
 ## Tailwind setup
 
-`web-editor/styles.css` is Tailwind v4 source (it declares `@import
+`browser-ide-kit/styles.css` is Tailwind v4 source (it declares `@import
 'tailwindcss'`, the theme tokens, and `@source` for its own built components).
 Import it from your app's stylesheet and add a `@source` for your own files:
 
 ```css
-@import 'web-editor/styles.css';
+@import 'browser-ide-kit/styles.css';
 @source './';
 ```
 

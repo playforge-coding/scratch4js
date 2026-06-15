@@ -91,7 +91,7 @@ rest of the page's networking untouched.
 ```sh
 git clone https://github.com/playforge-coding/scratch4js
 cd scratch4js && pnpm install
-pnpm --filter web-editor build      # build the toolkit dev-local imports
+pnpm --filter browser-ide-kit build      # build the toolkit dev-local imports
 pnpm --filter dev-local dev
 ```
 

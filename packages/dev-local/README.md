@@ -89,12 +89,12 @@ The **Remote** tab does `clone`, `pull`, and `push` over HTTP:
 
 ## Run it locally
 
-From the repo root (installs the whole workspace, including the `web-editor`
+From the repo root (installs the whole workspace, including the `browser-ide-kit`
 package this app depends on):
 
 ```bash
 pnpm install
-pnpm --filter web-editor build   # build the library this app imports
+pnpm --filter browser-ide-kit build   # build the library this app imports
 pnpm --filter dev-local dev
 ```
 

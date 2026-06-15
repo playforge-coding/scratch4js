@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Flag, RotateCw, Square } from 'lucide-react';
-import { IconButton, Tooltip, useEditorState } from 'web-editor';
+import { IconButton, Tooltip, useEditorState } from 'browser-ide-kit';
 
 import { scratch } from './controller.js';
 import { attachStage, STAGE_H, STAGE_W } from './vm.js';

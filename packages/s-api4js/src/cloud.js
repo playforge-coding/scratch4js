@@ -20,8 +20,8 @@ const TURBOWARP_CLOUD_HOST = 'wss://clouddata.turbowarp.org';
  * - **Scratch** — `session.cloud(projectId)` fills in the auth cookie, username
  *   and origin. Connecting requires login; reading the {@link Cloud#logs logs}
  *   does not.
- * - **TurboWarp** — {@link Cloud.turbowarp} needs no login (and allows longer,
- *   non-numeric values with no rate limit).
+ * - **TurboWarp** — {@link Cloud.turbowarp} needs no login. Values are still
+ *   numeric-only (like Scratch); only the length cap is larger (100 000 chars).
  * - **Any custom server** — `new Cloud({ projectId, host: 'wss://…' })` with
  *   whatever `cookie` / `userAgent` / limits it needs.
  *
@@ -42,7 +42,7 @@ const TURBOWARP_CLOUD_HOST = 'wss://clouddata.turbowarp.org';
  * // TurboWarp (no login)
  * const cloud = Cloud.turbowarp(123456789, { contact: 'me@example.com' });
  * cloud.on('set', ({ name, value }) => console.log(name, '=', value));
- * await cloud.setVar('message', 'hello'); // strings are allowed here
+ * await cloud.setVar('score', 100); // numeric-only, same as Scratch
  */
 export class Cloud {
   /** WebSocket URL of Scratch's cloud server. */
@@ -52,10 +52,11 @@ export class Cloud {
 
   /**
    * Open an **unauthenticated** connection to TurboWarp's cloud server. No login
-   * is needed; values may be non-numeric and up to 100 000 chars, and there's no
-   * rate limit. TurboWarp asks connections to identify themselves, so pass a
-   * `purpose` and/or `contact` (folded into the `User-Agent`) or a full
-   * `userAgent`.
+   * is needed. Values are still numeric-only (same rule as Scratch); the only
+   * difference is a much larger length cap — up to 100 000 chars. TurboWarp also
+   * buffers updates, so setting a variable more than ~10×/second is redundant.
+   * TurboWarp asks connections to identify themselves, so pass a `purpose` and/or
+   * `contact` (folded into the `User-Agent`) or a full `userAgent`.
    *
    * @param {number | string} projectId
    * @param {object} [options]
@@ -81,9 +82,10 @@ export class Cloud {
       projectId,
       host: TURBOWARP_CLOUD_HOST,
       userAgent: agent,
-      allowNonNumeric: true,
+      // TurboWarp is still numeric-only like Scratch — it just raises the
+      // value-length cap to 100 000 chars. (Pass allowNonNumeric via options
+      // only for a custom server that genuinely accepts strings.)
       lengthLimit: 100000,
-      rateLimit: 0,
       ...options,
     });
   }

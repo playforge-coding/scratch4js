@@ -19,7 +19,7 @@ import {
   Tooltip,
   TooltipProvider,
   useEditorState,
-} from 'web-editor';
+} from 'browser-ide-kit';
 
 import { repoDirFor, saveProject } from '../db.js';
 import { createProjectEditor } from '../editor.js';

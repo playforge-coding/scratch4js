@@ -8,7 +8,7 @@ import {
   Terminal,
   Trash2,
 } from 'lucide-react';
-import { Button } from 'web-editor';
+import { Button } from 'browser-ide-kit';
 
 import {
   deleteProject,

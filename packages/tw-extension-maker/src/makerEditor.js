@@ -1,4 +1,4 @@
-import { createEditor } from 'web-editor';
+import { createEditor } from 'browser-ide-kit';
 
 import { buildDescriptor, installCommand } from './template.js';
 

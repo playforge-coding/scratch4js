@@ -16,8 +16,8 @@ website, drive it all from an AI agent, and build & bundle TurboWarp extensions.
 | [`packages/tw-plugin-webpack`](packages/tw-plugin-webpack)     | `tw-plugin-webpack`   | webpack/Rspack plugin that bundles a multi-file TurboWarp extension into one IIFE-wrapped file.                                 |
 | [`packages/tw-plugin-rollup`](packages/tw-plugin-rollup)       | `tw-plugin-rollup`    | Rollup/Rolldown/Vite plugin that bundles a multi-file TurboWarp extension into one IIFE-wrapped file.                           |
 | [`packages/create-tw-extension`](packages/create-tw-extension) | `create-tw-extension` | Scaffolder (`npm create tw-extension`) for a new TurboWarp extension project with your choice of bundler.                       |
-| [`packages/web-editor`](packages/web-editor)                   | `web-editor`          | Reusable React building blocks for in-browser IDEs: split-pane layout, Monaco, an xterm/WebContainer terminal, file tree.       |
-| [`packages/tw-extension-maker`](packages/tw-extension-maker)   | `tw-extension-maker`  | In-browser IDE (built on `web-editor`) that bundles a TurboWarp extension in a WebContainer and previews it live.               |
+| [`packages/web-editor`](packages/web-editor)                   | `browser-ide-kit`     | Reusable React building blocks for in-browser IDEs: split-pane layout, Monaco, an xterm/WebContainer terminal, file tree.       |
+| [`packages/tw-extension-maker`](packages/tw-extension-maker)   | `tw-extension-maker`  | In-browser IDE (built on `browser-ide-kit`) that bundles a TurboWarp extension in a WebContainer and previews it live.          |
 | [`packages/userscript`](packages/userscript)                   | `userscript`          | TurboWarp Desktop userscript (ES modules → one IIFE): scratch-mcp live-reload + real-time collaboration over a WebSocket relay. |
 
 ## How they fit together

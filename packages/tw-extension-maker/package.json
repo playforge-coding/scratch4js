@@ -48,6 +48,6 @@
     "scratch-blocks": "github:TurboWarp/scratch-blocks#d3d1c2c89c0c63d3c16434ba063accd881d487c2",
     "scratch-render": "github:TurboWarp/scratch-render#a67f7c9c07d459582c227d4fd3fae8f59d8fc9ce",
     "scratch-vm": "github:TurboWarp/scratch-vm#43f13efd1883eeef8f82616faf69380ff75ab068",
-    "web-editor": "workspace:*"
+    "browser-ide-kit": "workspace:*"
   }
 }
