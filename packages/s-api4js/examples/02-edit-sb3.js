@@ -9,6 +9,14 @@
 import { ScratchSession } from 's-api4js';
 import { Project } from 'scratch4js';
 import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+
+// Load credentials from the repo-root .env if present (shell env still wins).
+try {
+  process.loadEnvFile(resolve(import.meta.dirname, '../../../.env'));
+} catch {
+  // No .env file — rely on the environment as documented above.
+}
 
 const { SCRATCH_USER, SCRATCH_PASS, PROJECT_ID } = process.env;
 const sb3Path = process.argv[2];

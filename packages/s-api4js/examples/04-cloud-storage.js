@@ -11,6 +11,14 @@
 // swap in SqlDatabase with your dialect — see the comments below.
 
 import { ScratchSession, JsonDatabase } from 's-api4js';
+import { resolve } from 'node:path';
+
+// Load credentials from the repo-root .env if present (shell env still wins).
+try {
+  process.loadEnvFile(resolve(import.meta.dirname, '../../../.env'));
+} catch {
+  // No .env file — rely on the environment as documented above.
+}
 
 const { SCRATCH_USER, SCRATCH_PASS, PROJECT_ID } = process.env;
 

@@ -11,6 +11,14 @@
 // Requires the `ws` package (a dependency of s-api4js) for the WebSocket.
 
 import { ScratchSession } from 's-api4js';
+import { resolve } from 'node:path';
+
+// Load credentials from the repo-root .env if present (shell env still wins).
+try {
+  process.loadEnvFile(resolve(import.meta.dirname, '../../../.env'));
+} catch {
+  // No .env file — rely on the environment as documented above.
+}
 
 const { SCRATCH_USER, SCRATCH_PASS, PROJECT_ID } = process.env;
 
