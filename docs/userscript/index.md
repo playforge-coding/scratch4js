@@ -7,13 +7,16 @@ description: A TurboWarp Desktop userscript that adds scratch-mcp live-reload an
 
 [`userscript`](https://github.com/playforge-coding/scratch4js/tree/main/packages/userscript)
 is a single [TurboWarp Desktop](https://desktop.turbowarp.org/) **userscript** +
-**userstyle** that bundles two independent features:
+**userstyle** that bundles three independent features:
 
 - **scratch-mcp live-reload** — reloads/runs the project on command from the
   [`scratch-mcp`](/mcp-server/) bridge, so edits an agent makes appear instantly.
 - **collaboration** — **real-time, multi-editor collaboration**. Two or more
   people open the same project and edit it together; blocks, sprites, costumes
   and sounds all stay in sync.
+- **git-sb3 diff-sync** — streams the live project to a
+  [`git sb3 watch`](/git-sb3/live) server (`ws://localhost:9061`) on every edit,
+  so an open visual diff refreshes in real time as you build.
 
 The source is authored as ES modules and bundled by [Rsbuild](https://rsbuild.rs/)
 into one self-executing script — TurboWarp Desktop only loads a single

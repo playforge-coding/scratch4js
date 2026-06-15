@@ -1,0 +1,52 @@
+{
+  "name": "git-sb3",
+  "description": "A git extension for version-controlling Scratch .sb3 projects: diffable unpack/pack, readable git diffs, and visual scratchblocks diff reports. Run as `git sb3`.",
+  "version": "1.2.2",
+  "type": "module",
+  "license": "MPL-2.0",
+  "author": "playforge-coding",
+  "homepage": "https://github.com/playforge-coding/scratch4js/tree/main/packages/git-sb3#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/playforge-coding/scratch4js.git",
+    "directory": "packages/git-sb3"
+  },
+  "bugs": {
+    "url": "https://github.com/playforge-coding/scratch4js/issues"
+  },
+  "keywords": [
+    "scratch",
+    "sb3",
+    "git",
+    "git-extension",
+    "diff",
+    "version-control",
+    "scratchblocks",
+    "turbowarp"
+  ],
+  "bin": {
+    "git-sb3": "./src/index.js"
+  },
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test --test-timeout=120000 \"test/**/*.test.js\""
+  },
+  "dependencies": {
+    "@turbowarp/jszip": "^3.12.0",
+    "commander": "^14.0.0",
+    "diff": "^7.0.0",
+    "jsdom": "^29.1.1",
+    "parse-sb3-blocks": "^0.5.2",
+    "scratchblocks": "^3.6.4",
+    "ws": "^8.18.0"
+  }
+}

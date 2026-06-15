@@ -20,6 +20,11 @@
     "activeMatch": "/mcp-server/"
   },
   {
+    "text": "Git extension",
+    "link": "/git-sb3/",
+    "activeMatch": "/git-sb3/"
+  },
+  {
     "text": "Create extension",
     "link": "/create-tw-extension/",
     "activeMatch": "/create-tw-extension/"
