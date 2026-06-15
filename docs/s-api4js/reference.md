@@ -6,8 +6,11 @@ description: Every s-api4js class, method and Scratch API endpoint in one place.
 # Reference
 
 The package exports `ScratchSession`, the resource classes (`Users`, `Projects`,
-`Studios`, `Search`) and `ScratchAPIError`. In normal use you only construct a
-`ScratchSession` — the resources are reached through it.
+`Studios`, `Search`), the cloud classes (`Cloud`, `CloudRequests`,
+`CloudEvents`, `CloudStorage`), the database adapters (`MemoryDatabase`,
+`JsonDatabase`, `SqlDatabase`), the `Encoding` helpers (`encode`, `decode`) and
+`ScratchAPIError`. In normal use you only construct a `ScratchSession` —
+everything else is reached through it.
 
 ```js
 import { ScratchSession, ScratchAPIError } from 's-api4js';
@@ -129,6 +132,82 @@ Each takes `{ mode?, language?, limit?, offset? }`, where `mode` is `'popular'`
 | `studios(q, opts?)`          | `GET /search/studios`                         |
 | `exploreProjects(q?, opts?)` | `GET /explore/projects` (`q` defaults to `*`) |
 | `exploreStudios(q?, opts?)`  | `GET /explore/studios`                        |
+
+## `session.cloud(projectId, options?)`
+
+Returns a [`Cloud`](#cloud) (requires login). `options` overrides the defaults:
+
+| Option            | Default                           | Purpose                                  |
+| ----------------- | --------------------------------- | ---------------------------------------- |
+| `host`            | `wss://clouddata.scratch.mit.edu` | Cloud WebSocket URL (set for TurboWarp). |
+| `allowNonNumeric` | `false`                           | Permit non-numeric values.               |
+| `lengthLimit`     | `256`                             | Max value length.                        |
+| `rateLimit`       | `0.1`                             | Minimum seconds between sets.            |
+| `WebSocket`       | `ws`, then `globalThis.WebSocket` | WebSocket implementation.                |
+
+### `Cloud`
+
+| Method                                       | Description                                              |
+| -------------------------------------------- | -------------------------------------------------------- |
+| `connect()` / `disconnect()` / `reconnect()` | Manage the WebSocket (the first `setVar` connects too).  |
+| `setVar(name, value)`                        | Set one `☁` variable (serialized + rate-limited).        |
+| `setVars({ … })`                             | Set several, in order.                                   |
+| `getVar(name)` / `getAllVars()`              | Latest value(s) seen since connecting.                   |
+| `logs({ variable?, limit?, offset? })`       | `GET clouddata.scratch.mit.edu/logs` (no login needed).  |
+| `on(event, fn)` / `off(event, fn)`           | Events: `set`, `connect`, `disconnect`, `error`.         |
+| `requests(options?)`                         | Build a [`CloudRequests`](#cloudrequests) on this cloud. |
+| `events(options?)`                           | Build a [`CloudEvents`](#cloudevents) log poller.        |
+| `storage(options?)`                          | Build a [`CloudStorage`](#cloudstorage) key-value store. |
+
+### `CloudRequests`
+
+Built with `cloud.requests({ requestVar?, usedCloudVars? })`.
+
+| Method                   | Description                                                       |
+| ------------------------ | ----------------------------------------------------------------- |
+| `request(name, handler)` | Register a handler `(args, ctx) => string \| number \| string[]`. |
+| `removeRequest(name)`    | Remove a handler.                                                 |
+| `start()` / `stop()`     | Begin / stop handling requests.                                   |
+| `on(event, fn)`          | Events: `request`, `unknownRequest`, `error`.                     |
+
+The handler `ctx` is `{ name, args, requestId, requester }`.
+
+### `CloudEvents`
+
+Built with `cloud.events({ interval?, limit? })` — polls the public log, so it
+works **without login** and reports the acting user and `create`/`delete`.
+
+| Method               | Description                                          |
+| -------------------- | ---------------------------------------------------- |
+| `on(event, fn)`      | Events: `ready`, `set`, `create`, `delete`, `error`. |
+| `start()` / `stop()` | Seed the cursor and begin / stop polling.            |
+
+Activity events receive `{ user, verb, name, value, timestamp }`.
+
+### `CloudStorage`
+
+Built with `cloud.storage(options?)` — a cloud-backed key-value store
+(scratchattach's Cloud Storage protocol). Serves `get`, `set`, `keys`,
+`database_names` and `ping` requests over the cloud.
+
+| Method               | Description                                    |
+| -------------------- | ---------------------------------------------- |
+| `addDatabase(db)`    | Register a database (addressed by its `name`). |
+| `getDatabase(name)`  | Look up a registered database.                 |
+| `start()` / `stop()` | Begin / stop serving storage requests.         |
+| `on(event, fn)`      | Events: `request`, `unknownRequest`, `error`.  |
+
+Databases implement `{ name, get(key), set(key, value), keys() }`. Bundled:
+
+| Class            | Backing store                                                         |
+| ---------------- | --------------------------------------------------------------------- |
+| `MemoryDatabase` | In-memory (not persisted).                                            |
+| `JsonDatabase`   | A JSON file (`{ path }`).                                             |
+| `SqlDatabase`    | SQLite / MySQL / MariaDB / PostgreSQL — `{ dialect, query, table? }`. |
+
+`SqlDatabase` needs no bundled driver: pass a `query(sql, params)` wrapping your
+client (better-sqlite3, mysql2, pg, …) that resolves to an array of row objects.
+See [Cloud variables & requests](/s-api4js/cloud).
 
 ## `ScratchAPIError`
 

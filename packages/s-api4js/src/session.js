@@ -4,6 +4,7 @@ import { Users } from './users.js';
 import { Projects } from './projects.js';
 import { Studios } from './studios.js';
 import { Search } from './search.js';
+import { Cloud } from './cloud.js';
 
 const SITE_HOST = 'https://scratch.mit.edu';
 const API_HOST = 'https://api.scratch.mit.edu';
@@ -226,6 +227,45 @@ export class ScratchSession {
   /** Front-page featured projects and studios. @returns {Promise<any>} */
   featured() {
     return this._http.json(`${API_HOST}/proxy/featured`);
+  }
+
+  // ---- Cloud variables ----------------------------------------------------
+
+  /**
+   * Open a {@link Cloud} for a project's cloud variables, pre-filled with this
+   * session's auth (cookie, username, origin) so it can connect and set
+   * variables. Connecting to Scratch's cloud requires login.
+   *
+   * Call {@link Cloud#connect} before use, or just `await cloud.setVar(...)`
+   * (the first set connects automatically). Build a request/response server with
+   * `cloud.requests()`.
+   *
+   * @example
+   * const cloud = session.cloud(123456789);
+   * await cloud.setVar('score', 100);
+   *
+   * @example
+   * const requests = session.cloud(123456789).requests();
+   * requests.request('add', ([a, b]) => Number(a) + Number(b));
+   * await requests.start();
+   *
+   * @param {number | string} projectId
+   * @param {Partial<ConstructorParameters<typeof Cloud>[0]>} [options] - Overrides
+   *   (e.g. `host` for a TurboWarp cloud, or a custom `WebSocket`).
+   * @returns {Cloud}
+   */
+  cloud(projectId, options = {}) {
+    this.requireAuth();
+    const sessionId = this._cookieValue('scratchsessionsid');
+    return new Cloud({
+      projectId,
+      username: this.username ?? undefined,
+      cookie: sessionId ? `scratchsessionsid=${sessionId};` : undefined,
+      origin: this.siteHost,
+      userAgent: this._http.userAgent,
+      fetch: this._http._fetch,
+      ...options,
+    });
   }
 
   // ---- Internal plumbing (used by the resource classes) -------------------

@@ -55,6 +55,7 @@
     "typescript": "^5.9.0"
   },
   "dependencies": {
-    "tough-cookie": "^5.1.2"
+    "tough-cookie": "^5.1.2",
+    "ws": "^8.18.0"
   }
 }

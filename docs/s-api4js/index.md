@@ -63,6 +63,8 @@ await session.projects.save(123456789, project);
   jar, and custom `fetch`.
 - **[Editing projects](/s-api4js/editing-projects)** — download, save and publish
   a project's `.sb3`.
+- **[Cloud variables & requests](/s-api4js/cloud)** — set and read `☁` variables
+  over WebSocket, and run a scratchattach-compatible cloud-requests server.
 - **[Reference](/s-api4js/reference)** — every class, method and endpoint.
 
 ::: tip Drive it from an AI agent
@@ -73,6 +75,7 @@ asking you to confirm before it touches the live project.
 
 ## Scope
 
-Only **public data** and **login + project editing** are implemented today; more
-endpoints will follow. The package targets Node — browser use is limited by CORS,
-since the login and asset hosts don't send permissive cross-origin headers.
+**Public data**, **login + project editing** and **cloud variables / requests**
+are implemented today; more endpoints will follow. The package targets Node —
+browser use is limited by CORS, since the login and asset hosts don't send
+permissive cross-origin headers.

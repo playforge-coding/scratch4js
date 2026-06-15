@@ -61,6 +61,73 @@ await session.projects.setInstructions(123456789, 'Arrow keys to move.');
 scripts and not costumes/sounds, `session.projects.setJson(id, json)` skips the
 asset uploads.
 
+### Cloud variables & cloud requests
+
+Open a project's cloud connection (WebSocket) to set/read `☁` variables, listen
+for changes, or run a **cloud-requests** server — the same request/response
+protocol as [scratchattach](https://github.com/TimMcCool/scratchattach), so a
+Scratch project built for it works unchanged.
+
+```js
+import { ScratchSession } from 's-api4js';
+
+const session = await ScratchSession.login('username', 'password');
+const cloud = session.cloud(123456789);
+
+await cloud.connect();
+cloud.on('set', ({ name, value }) => console.log(name, '=', value));
+await cloud.setVar('score', 100); // values must be numeric by default
+
+// A request/response server on the same connection:
+const requests = cloud.requests();
+requests.request('ping', () => 'pong');
+requests.request('add', ([a, b]) => Number(a) + Number(b));
+requests.request('greet', async ([name]) => `hello ${name}!`);
+requests.request('leaderboard', () => ['alice: 10', 'bob: 8']); // a list
+await requests.start();
+```
+
+A request handler receives the decoded string arguments (an array) plus a
+context (`{ name, requestId, requester, args }`) and returns a string, number,
+or array of strings. Strings are encoded to fit Scratch's numeric, 256-char
+cloud values and chunked across `☁ FROM_HOST_n` automatically.
+
+**Cloud storage** — a cloud-backed key-value store (scratchattach's Cloud Storage
+protocol). Pick your own database: bundled `MemoryDatabase`/`JsonDatabase`, or
+`SqlDatabase` for **SQLite**, **MySQL/MariaDB** or **PostgreSQL** (you supply a
+tiny `query` wrapper around your driver — no driver is bundled).
+
+```js
+import { SqlDatabase } from 's-api4js';
+import Database from 'better-sqlite3';
+
+const db = new Database('storage.db');
+const storage = cloud.storage();
+storage.addDatabase(
+  new SqlDatabase('scores', {
+    dialect: 'sqlite', // or 'mysql' / 'postgres'
+    query: (sql, params) => db.prepare(sql).all(params),
+  }),
+);
+await storage.start(); // project can now get/set/keys
+```
+
+**Cloud events** — watch a project's activity by polling its public log. Works
+**logged out**, and reports the acting user and `create`/`delete` (the live
+socket carries neither):
+
+```js
+const events = cloud.events();
+events.on('set', (a) => console.log(`${a.user} set ${a.name} = ${a.value}`));
+events.on('create', (a) => console.log(`${a.user} created ${a.name}`));
+await events.start();
+```
+
+Connecting to Scratch's cloud requires login and the [`ws`](https://github.com/websockets/ws)
+package (a dependency). Reading the public log — `cloud.logs()` / `cloud.events()`
+— does not. Point `cloud` at a TurboWarp project with
+`session.cloud(id, { host: 'wss://clouddata.turbowarp.org' })`.
+
 ## API
 
 Everything hangs off a `ScratchSession`.
@@ -104,6 +171,26 @@ and the shortcuts `setTitle`, `setInstructions`, `setDescription`.
 `projects(q, opts?)`, `studios(q, opts?)`, `exploreProjects(q?, opts?)`,
 `exploreStudios(q?, opts?)`. `opts` is
 `{ mode?: 'trending' | 'popular', language?, limit?, offset? }`.
+
+### `session.cloud(projectId, options?)`
+
+Returns a `Cloud` (requires login). `options` overrides the defaults, e.g.
+`{ host, allowNonNumeric, lengthLimit, rateLimit, WebSocket }`.
+
+`Cloud`: `connect()`, `disconnect()`, `reconnect()`, `setVar(name, value)`,
+`setVars({ … })`, `getVar(name)`, `getAllVars()`, `logs({ variable?, limit?, offset? })`,
+`on(event, fn)` / `off(event, fn)` (`set`, `connect`, `disconnect`, `error`),
+and the builders `requests(options?)`, `events(options?)`, `storage(options?)`.
+
+`CloudRequests`: `request(name, handler)`, `removeRequest(name)`, `start()`,
+`stop()`, `on(event, fn)` (`request`, `unknownRequest`, `error`).
+
+`CloudEvents`: `on(event, fn)` (`ready`, `set`, `create`, `delete`, `error`),
+`start()`, `stop()`.
+
+`CloudStorage`: `addDatabase(db)`, `getDatabase(name)`, `start()`, `stop()`,
+`on(event, fn)`. Databases: `MemoryDatabase`, `JsonDatabase`, `SqlDatabase`
+(`dialect`: `'sqlite' | 'mysql' | 'postgres'`).
 
 ## Errors
 
